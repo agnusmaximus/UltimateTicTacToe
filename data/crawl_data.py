@@ -51,6 +51,20 @@ def get_data_from_game_link(game_link):
     data = json.loads(urllib2.urlopen(game_link).read())
     return data
 
+def convert_state(state):
+    result = copy.deepcopy(state)
+    result["field"] = []
+    result_field = []
+    for val in state["field"].split(","):
+        val = int(val)
+        if val >= 32:
+            val -= 32
+        elif val >= 16:
+            val -= 16
+        result_field.append(val)
+    result["field"] = ",".join([str(x) for x in result_field])
+    return result
+
 def clean_game_data(game_data):
     game_data_copy = copy.deepcopy(game_data)
     game_data_copy["states"] = []
@@ -59,8 +73,12 @@ def clean_game_data(game_data):
         zeros = [x for x in field if x == 0]
         ones = [x for x in field if x == 1]
         twos = [x for x in field if x == 2]
-        if len(zeros) + len(ones) + len(twos) == len(field):
-            game_data_copy["states"].append(state)
+        sixteens = [x for x in field if x == 16 or x == 17 or x == 18]
+        thirty_twos = [x for x in field if x == 32 or x == 33 or x == 34]
+        if len(zeros) + len(ones) + len(twos) + len(sixteens) + len(thirty_twos) == len(field) and \
+           state["winner"] == "":
+            rectified_state = convert_state(state)
+            game_data_copy["states"].append(rectified_state)
     return game_data_copy
 
 def save_data(all_game_data):
