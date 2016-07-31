@@ -108,7 +108,7 @@ def extract_features(single_game_data, index, previous_move_location=-1):
     opponent_plane = extract_user_plane(current_board_state, opponent)
     free_space_plane = extract_user_plane(current_board_state, 0)
     legality_plane = extract_legality_plane(current_board_state, previous_move_location)
-    all_features = player_plane + opponent_plane + free_space_plane + legality_plane
+    all_features = [player_plane, opponent_plane, free_space_plane, legality_plane]
 
     # Get label
     label = extract_move_made(current_board_state, next_board_state)
