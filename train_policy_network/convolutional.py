@@ -38,13 +38,13 @@ WORK_DIRECTORY = 'data'
 IMAGE_SIZE = 9
 NUM_CHANNELS = 4
 NUM_LABELS = 81
-VALIDATION_SIZE = 64  # Size of the validation set.
+VALIDATION_SIZE = 1000  # Size of the validation set.
 SEED = None  # Set to None for random seed.
 BATCH_SIZE = 64
 NUM_EPOCHS = 10
 EVAL_BATCH_SIZE = 64
 EVAL_FREQUENCY = 100  # Number of steps between evaluations.
-
+SAVE_FREQUENCY = 1000
 
 tf.app.flags.DEFINE_boolean("self_test", False, "True if running a self test.")
 tf.app.flags.DEFINE_boolean('use_fp16', False,
@@ -73,6 +73,8 @@ def get_data():
   numpy.random.shuffle(raw_data)
   train_data = numpy.array([x[0] for x in raw_data])
   label_data = numpy.array([x[1] for x in raw_data])
+
+  print("%d train_data" % len(train_data))
 
   # Need data in 4d tensor form: [image index, y, x, channels]
   print("Done.")
@@ -156,16 +158,16 @@ def main(argv=None):  # pylint: disable=unused-argument
   batch = tf.Variable(0, dtype=data_type())
   # Decay once per epoch, using an exponential schedule starting at 0.01.
   learning_rate = tf.train.exponential_decay(
-      0.01,                # Base learning rate.
+      0.0001,                # Base learning rate.
       batch * BATCH_SIZE,  # Current index into the dataset.
-      train_size,          # Decay step.
+      train_size/4,          # Decay step.
       0.95,                # Decay rate.
       staircase=True)
   # Use simple momentum for the optimization.
-  optimizer = tf.train.MomentumOptimizer(learning_rate,
-                                         0.9).minimize(loss,
-                                                       global_step=batch)
-  #optimizer = tf.train.AdamOptimizer(learning_rate, .09).minimize(loss, global_step=batch)
+  #optimizer = tf.train.MomentumOptimizer(learning_rate,
+  #                                       0.9).minimize(loss,
+  #                                                     global_step=batch)
+  optimizer = tf.train.AdamOptimizer(learning_rate, .09).minimize(loss, global_step=batch)
 
   # Predictions for the current training minibatch.
   train_prediction = tf.nn.softmax(logits)
@@ -194,6 +196,8 @@ def main(argv=None):  # pylint: disable=unused-argument
             feed_dict={eval_data: data[-EVAL_BATCH_SIZE:, ...]})
         predictions[begin:, :] = batch_predictions[begin - size:, :]
     return predictions
+
+  saver = tf.train.Saver()
 
   # Create a local session to run the training.
   start_time = time.time()
@@ -227,6 +231,10 @@ def main(argv=None):  # pylint: disable=unused-argument
         print('Validation error: %.1f%%' % error_rate(
             eval_in_batches(validation_data, sess), validation_labels))
         sys.stdout.flush()
+
+      if step % SAVE_FREQUENCY == 0:
+        save_path = saver.save(sess, "./trained_model/model.ckpt")
+        print("Model saved in file: %s" % save_path)
     # Finally print the result!
     test_error = error_rate(eval_in_batches(test_data, sess), test_labels)
     print('Test error: %.1f%%' % test_error)
