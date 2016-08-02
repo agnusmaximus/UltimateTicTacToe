@@ -34,14 +34,12 @@ from six.moves import urllib
 from six.moves import xrange  # pylint: disable=redefined-builtin
 import tensorflow as tf
 
-SOURCE_URL = 'http://yann.lecun.com/exdb/mnist/'
 WORK_DIRECTORY = 'data'
 IMAGE_SIZE = 9
 NUM_CHANNELS = 4
-PIXEL_DEPTH = 1
 NUM_LABELS = 81
-VALIDATION_SIZE = 5000  # Size of the validation set.
-SEED = 66478  # Set to None for random seed.
+VALIDATION_SIZE = 64  # Size of the validation set.
+SEED = None  # Set to None for random seed.
 BATCH_SIZE = 64
 NUM_EPOCHS = 10
 EVAL_BATCH_SIZE = 64
@@ -52,6 +50,8 @@ tf.app.flags.DEFINE_boolean("self_test", False, "True if running a self test.")
 tf.app.flags.DEFINE_boolean('use_fp16', False,
                             "Use half floats instead of full floats if True.")
 tf.app.flags.DEFINE_string("game_data_train_file", "", "game data location")
+tf.app.flags.DEFINE_integer("pipeline_length", "", "pipeline length")
+tf.app.flags.DEFINE_integer("K", "", "depth")
 FLAGS = tf.app.flags.FLAGS
 
 
@@ -91,8 +91,9 @@ def main(argv=None):  # pylint: disable=unused-argument
   # Load validation_data, validataion_labels,
   # train_data, train_labels
   data, labels = get_data()
-  train_data, train_labels = data[VALIDATION_SIZE:], labels[VALIDATION_SIZE:]
-  validataion_data, validation_labels = data[:VALIDATION_SIZE], labels[VALIDATION_SIZE]
+  train_data, train_labels = data[VALIDATION_SIZE*2:], labels[VALIDATION_SIZE*2:]
+  test_data, test_labels = data[VALIDATION_SIZE:VALIDATION_SIZE*2], labels[VALIDATION_SIZE:VALIDATION_SIZE*2]
+  validation_data, validation_labels = data[:VALIDATION_SIZE], labels[:VALIDATION_SIZE]
 
   num_epochs = NUM_EPOCHS
   train_size = train_labels.shape[0]
@@ -108,84 +109,47 @@ def main(argv=None):  # pylint: disable=unused-argument
       data_type(),
       shape=(EVAL_BATCH_SIZE, IMAGE_SIZE, IMAGE_SIZE, NUM_CHANNELS))
 
-  # The variables below hold all the trainable weights. They are passed an
-  # initial value which will be assigned when we call:
-  # {tf.initialize_all_variables().run()}
-  conv1_weights = tf.Variable(
-      tf.truncated_normal([5, 5, NUM_CHANNELS, 32],  # 5x5 filter, depth 32.
-                          stddev=0.1,
-                          seed=SEED, dtype=data_type()))
-  conv1_biases = tf.Variable(tf.zeros([32], dtype=data_type()))
-  conv2_weights = tf.Variable(tf.truncated_normal(
-      [5, 5, 32, 64], stddev=0.1,
-      seed=SEED, dtype=data_type()))
-  conv2_biases = tf.Variable(tf.constant(0.1, shape=[64], dtype=data_type()))
-  fc1_weights = tf.Variable(  # fully connected, depth 512.
-      tf.truncated_normal([IMAGE_SIZE // 4 * IMAGE_SIZE // 4 * 64, 512],
-                          stddev=0.1,
-                          seed=SEED,
-                          dtype=data_type()))
-  fc1_biases = tf.Variable(tf.constant(0.1, shape=[512], dtype=data_type()))
-  fc2_weights = tf.Variable(tf.truncated_normal([512, NUM_LABELS],
-                                                stddev=0.1,
-                                                seed=SEED,
-                                                dtype=data_type()))
-  fc2_biases = tf.Variable(tf.constant(
-      0.1, shape=[NUM_LABELS], dtype=data_type()))
+  pipeline_length = FLAGS.pipeline_length
+
+  first_conv = tf.Variable(tf.truncated_normal([3, 3, NUM_CHANNELS, FLAGS.K],
+                                               stddev=.1, seed=SEED, dtype=data_type()))
+  first_bias = tf.Variable(tf.zeros([FLAGS.K], dtype=data_type()))
+
+  conv_weights = []
+  conv_biases = []
+  for i in range(pipeline_length):
+    conv_weight = tf.Variable(tf.truncated_normal([3, 3, FLAGS.K, FLAGS.K],
+                                                  stddev=0.1, seed=SEED, dtype=data_type()))
+    conv_bias = tf.Variable(tf.zeros([FLAGS.K], dtype=data_type()))
+    conv_weights.append(conv_weight)
+    conv_biases.append(conv_bias)
+
+  final_conv_weight = tf.Variable(tf.truncated_normal([3, 3, FLAGS.K, 1],
+                                                      stddev=0.1, seed=SEED, dtype=data_type()))
 
   # We will replicate the model structure for the training subgraph, as well
   # as the evaluation subgraphs, while sharing the trainable parameters.
   def model(data, train=False):
-    """The Model definition."""
-    # 2D convolution, with 'SAME' padding (i.e. the output feature map has
-    # the same size as the input). Note that {strides} is a 4D array whose
-    # shape matches the data layout: [image index, y, x, depth].
-    conv = tf.nn.conv2d(data,
-                        conv1_weights,
-                        strides=[1, 1, 1, 1],
-                        padding='SAME')
-    # Bias and rectified linear non-linearity.
-    relu = tf.nn.relu(tf.nn.bias_add(conv, conv1_biases))
-    # Max pooling. The kernel size spec {ksize} also follows the layout of
-    # the data. Here we have a pooling window of 2, and a stride of 2.
-    pool = tf.nn.max_pool(relu,
-                          ksize=[1, 2, 2, 1],
-                          strides=[1, 2, 2, 1],
-                          padding='SAME')
-    conv = tf.nn.conv2d(pool,
-                        conv2_weights,
-                        strides=[1, 1, 1, 1],
-                        padding='SAME')
-    relu = tf.nn.relu(tf.nn.bias_add(conv, conv2_biases))
-    pool = tf.nn.max_pool(relu,
-                          ksize=[1, 2, 2, 1],
-                          strides=[1, 2, 2, 1],
-                          padding='SAME')
-    # Reshape the feature map cuboid into a 2D matrix to feed it to the
-    # fully connected layers.
-    pool_shape = pool.get_shape().as_list()
-    reshape = tf.reshape(
-        pool,
-        [pool_shape[0], pool_shape[1] * pool_shape[2] * pool_shape[3]])
-    # Fully connected layer. Note that the '+' operation automatically
-    # broadcasts the biases.
-    hidden = tf.nn.relu(tf.matmul(reshape, fc1_weights) + fc1_biases)
-    # Add a 50% dropout during training only. Dropout also scales
-    # activations such that no rescaling is needed at evaluation time.
-    if train:
-      hidden = tf.nn.dropout(hidden, 0.5, seed=SEED)
-    return tf.matmul(hidden, fc2_weights) + fc2_biases
+
+    conv, relu = None, None
+    conv = tf.nn.conv2d(data, first_conv, strides=[1,1,1,1], padding="SAME")
+    relu = tf.nn.relu(tf.nn.bias_add(conv, first_bias))
+    #relu = tf.pad(relu, [[0,0],[3,3],[3,3],[0,0]], "CONSTANT")
+    for i in range(0, FLAGS.pipeline_length):
+      conv = tf.nn.conv2d(relu, conv_weights[i], strides=[1,1,1,1], padding="SAME")
+      relu = tf.nn.relu(tf.nn.bias_add(conv, conv_biases[i]))
+      #relu = tf.pad(relu, [[0,0],[3,3],[3,3],[0,0]], "CONSTANT")
+    final_conv = tf.nn.conv2d(relu, final_conv_weight, strides=[1,1,1,1], padding="SAME")
+    shape = final_conv.get_shape().as_list()
+    return tf.reshape(final_conv, [shape[0], shape[1]*shape[2]*shape[3]])
+    #return reshape
 
   # Training computation: logits + cross-entropy loss.
   logits = model(train_data_node, True)
   loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(
       logits, train_labels_node))
 
-  # L2 regularization for the fully connected parameters.
-  regularizers = (tf.nn.l2_loss(fc1_weights) + tf.nn.l2_loss(fc1_biases) +
-                  tf.nn.l2_loss(fc2_weights) + tf.nn.l2_loss(fc2_biases))
-  # Add the regularization term to the loss.
-  loss += 5e-4 * regularizers
+  loss += 5e-4
 
   # Optimizer: set up a variable that's incremented once per batch and
   # controls the learning rate decay.
@@ -201,6 +165,7 @@ def main(argv=None):  # pylint: disable=unused-argument
   optimizer = tf.train.MomentumOptimizer(learning_rate,
                                          0.9).minimize(loss,
                                                        global_step=batch)
+  #optimizer = tf.train.AdamOptimizer(learning_rate, .09).minimize(loss, global_step=batch)
 
   # Predictions for the current training minibatch.
   train_prediction = tf.nn.softmax(logits)
