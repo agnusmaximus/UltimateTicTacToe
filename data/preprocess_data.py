@@ -156,6 +156,39 @@ def add_rotated_games(data):
         rotated_games.append(rotate_game(game, 3))
     return data + rotated_games
 
+def swap(arr, x, y):
+  t = arr[x]
+  arr[x] = arr[y]
+  arr[y] = t
+
+def flip_game(game, hor_or_vert):
+  game_copy = copy.deepcopy(game)
+  for ii, position in enumerate(game["states"]):
+    new_position = game["states"][ii]["field"]
+    new_position = [int(x) for x in new_position.split(",")]
+    l_i, l_j = 9, 9
+    if hor_or_vert:
+      l_i = 4
+    else:
+      l_j = 4
+    for i in range(l_i):
+      for j in range(l_j):
+        if hor_or_vert:
+          swap(new_position, i*9+j,(9-i-1)*9+j)
+        else:
+          swap(new_position, i*9+j, i*9+9-j-1)
+    game_copy["states"][ii]["field"] = ",".join([str(x) for x in new_position])
+  return game_copy
+
+def add_flipped_games(data):
+  flipped_games = []
+  for i, game in enumerate(data):
+    if i % 500 == 0:
+      print("%d games flipped of %d" % (i, len(data)))
+    flipped_games.append(flip_game(game, 0))
+    flipped_games.append(flip_game(game, 1))
+  return data + flipped_games
+
 def count_distinct_positions(data):
     positions = set()
     for game in data:
@@ -174,16 +207,15 @@ def preprocess():
     print("Number of raw games: %d" % len(data))
     print("Number of raw distinct positions: %d" % count_distinct_positions(data))
     print("Rotating games to increase data size...")
-    #data = add_rotated_games(data)
+    data = add_flipped_games(data)
+    data = add_rotated_games(data)
     print("Number of total games: %d" % len(data))
     print("Number of total distinct positions: %d" % count_distinct_positions(data))
     preprocessed_data = []
     for i, game in enumerate(data):
-        if i % 500 == 0:
+        if i % 5000 == 0:
             print("%d games processed..." % i)
             save_preprocessed_data(preprocessed_data)
-            if i != 0:
-                break
         previous_move = -1
         for game_step in range(len(game["states"])):
             features, previous_move, label, does_win_or_draw = extract_features(game, game_step, previous_move)
