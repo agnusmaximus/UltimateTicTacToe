@@ -47,7 +47,7 @@ struct MoveSort {
     this->rdepth = rdepth;
   }
   inline bool operator() (const Move& m1, const Move& m2) {
-    return s->history[m1.x][m1.y][m1.who][rdepth] >
+    return s->history[m1.x][m1.y][m1.who][rdepth] <
         s->history[m2.x][m2.y][m2.who][rdepth];
   }
   State *s;
@@ -90,7 +90,7 @@ void PrintBoard(State &s) {
 void Initialize(State &s) {
   memset(s.results_board.data(), 0, sizeof(char) * BOARD_DIM);
   memset(s.board.data(), 0, sizeof(char) * BOARD_DIM * BOARD_DIM);
-  memset(s.history, 0, sizeof(int) * BOARD_DIM * BOARD_DIM * 2);
+  memset(s.history, 0, sizeof(int) * BOARD_DIM * BOARD_DIM * 2 * DEPTH);
   s.cur_player = PLAYER_1;
 }
 
