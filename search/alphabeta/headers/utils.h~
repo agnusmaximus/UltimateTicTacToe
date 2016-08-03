@@ -1,0 +1,18 @@
+#include <iostream>
+#include <map>
+#include <unordered_map>
+#include <vector>
+
+#define EMPTY 0
+#define PLAYER_1 1
+#define PLAYER_2 2
+#define SELF PLAYER_1
+
+using namespace std;
+
+struct State {
+  std::array<char, 9> results_board;
+  std::array<char, 81> board;
+};
+
+typedef struct State State;
