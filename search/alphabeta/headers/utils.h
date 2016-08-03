@@ -1,6 +1,7 @@
 #ifndef _UTILS_
 #define _UTILS_
 
+#include <algorithm>
 #include <iostream>
 #include <string.h>
 #include <chrono>
@@ -17,6 +18,8 @@
 #define PLAYER_2 2
 #define SELF PLAYER_1
 
+#define DEPTH 11
+
 using namespace std;
 using namespace std::chrono;
 
@@ -27,31 +30,46 @@ struct Move {
 typedef struct Move Move;
 
 struct State {
-  array<char, 9> results_board;
-  array<char, 81> board;
+  // Basic info.
+  array<char, BOARD_DIM> results_board;
+  array<char, BOARD_DIM*BOARD_DIM> board;
   vector<Move *> moves;
   char cur_player;
-};
 
+  // History heuristic.
+  int history[BOARD_DIM][BOARD_DIM][2][DEPTH];
+};
 typedef struct State State;
+
+struct MoveSort {
+  MoveSort(State *state, int rdepth) {
+    this->s = state;
+    this->rdepth = rdepth;
+  }
+  inline bool operator() (const Move& m1, const Move& m2) {
+    return s->history[m1.x][m1.y][m1.who][rdepth] >
+        s->history[m2.x][m2.y][m2.who][rdepth];
+  }
+  State *s;
+  int rdepth;
+};
 
 int GetTimeMs() {
   milliseconds ms = duration_cast< milliseconds >(
-      system_clock::now().time_since_epoch()
-                                                  );
+      system_clock::now().time_since_epoch());
   return ms.count();
 }
 
 void PrintBoard(State &s) {
-  for (int i = 0; i < 9; i++) {
+  for (int i = 0; i < BOARD_DIM; i++) {
     string line = "";
     if (i % 3 == 0) {
-      for (int j = 0; j < 12; j++ ){
+      for (int j = 0; j < BOARD_DIM+BOARD_DIM/3; j++ ){
         line += "-";
       }
       line += "\n";
     }
-    for (int j = 0; j < 9; j++) {
+    for (int j = 0; j < BOARD_DIM; j++) {
       if (j % 3 == 0) {
         line += "|";
       }
@@ -70,8 +88,9 @@ void PrintBoard(State &s) {
 }
 
 void Initialize(State &s) {
-  memset(s.results_board.data(), 0, sizeof(char) * 9);
-  memset(s.board.data(), 0, sizeof(char) * 9 * 9);
+  memset(s.results_board.data(), 0, sizeof(char) * BOARD_DIM);
+  memset(s.board.data(), 0, sizeof(char) * BOARD_DIM * BOARD_DIM);
+  memset(s.history, 0, sizeof(int) * BOARD_DIM * BOARD_DIM * 2);
   s.cur_player = PLAYER_1;
 }
 
@@ -137,6 +156,14 @@ void UndoMove(State &s, Move &m) {
   s.results_board[results_index] = EMPTY;
   s.cur_player = Other(s.cur_player);
   s.moves.pop_back();
+}
+
+void AddCutoff(State &s, Move &m, int rdepth) {
+  s.history[m.x][m.y][m.who][rdepth]++;
+}
+
+void OrderMoves(State &s, vector<Move> &moves, int rdepth) {
+  sort(moves.begin(), moves.end(), MoveSort(&s, rdepth));
 }
 
 void GenerateValidMoves(State &s, vector<Move> &moves) {
