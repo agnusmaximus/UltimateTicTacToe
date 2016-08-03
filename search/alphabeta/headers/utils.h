@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <string.h>
+#include <chrono>
 #include <stdlib.h>
 #include <map>
 #include <unordered_map>
@@ -17,6 +18,7 @@
 #define SELF PLAYER_1
 
 using namespace std;
+using namespace std::chrono;
 
 struct Move {
   int x, y;
@@ -32,6 +34,13 @@ struct State {
 };
 
 typedef struct State State;
+
+int GetTimeMs() {
+  milliseconds ms = duration_cast< milliseconds >(
+      system_clock::now().time_since_epoch()
+                                                  );
+  return ms.count();
+}
 
 void PrintBoard(State &s) {
   for (int i = 0; i < 9; i++) {
