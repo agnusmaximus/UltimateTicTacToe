@@ -158,7 +158,7 @@ def main(argv=None):  # pylint: disable=unused-argument
   batch = tf.Variable(0, dtype=data_type())
   # Decay once per epoch, using an exponential schedule starting at 0.01.
   learning_rate = tf.train.exponential_decay(
-      0.0001,                # Base learning rate.
+      0.001,                # Base learning rate.
       batch * BATCH_SIZE,  # Current index into the dataset.
       train_size/4,          # Decay step.
       0.95,                # Decay rate.
@@ -204,6 +204,7 @@ def main(argv=None):  # pylint: disable=unused-argument
   with tf.Session() as sess:
     # Run all the initializers to prepare the trainable parameters.
     tf.initialize_all_variables().run()
+    saver.restore(sess, "./trained_model/model.ckpt")
     print('Initialized!')
     # Loop through training steps.
     for step in xrange(int(num_epochs * train_size) // BATCH_SIZE):

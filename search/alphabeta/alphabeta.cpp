@@ -36,8 +36,9 @@ int alphabeta(State &s, int depth, int a, int b) {
       b = min(b, best_score);
     }
     UndoMove(s, move);
-    if (a >= b)
+    if (a >= b) {
       break;
+    }
   }
   return best_score;
 }
