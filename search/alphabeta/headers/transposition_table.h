@@ -23,13 +23,25 @@ struct BoardHasher {
     size_t hash = 0;
     for (int i = 0; i < BOARD_DIM*BOARD_DIM; i++) {
       hash *= 3;
-      hash += b[i];
+      hash += (size_t)b[i];
     }
     return hash;
   }
 };
 
 unordered_map<array<char, BOARD_DIM*BOARD_DIM>, TTEntry, BoardHasher> transposition_table;
+
+void RotateBoard(array<char, BOARD_DIM*BOARD_DIM> &b) {
+  for (int i = 0; i < BOARD_DIM/2; i++) {
+    for (int j = 0; j < BOARD_DIM/2+1; j++) {
+      char t = b[i*BOARD_DIM+j];
+      b[i*BOARD_DIM+j] = b[j*BOARD_DIM+BOARD_DIM-1-i];
+      b[j*BOARD_DIM+BOARD_DIM-1-i] = b[(BOARD_DIM-1-i)*BOARD_DIM+BOARD_DIM-1-j];
+      b[(BOARD_DIM-1-i)*BOARD_DIM+BOARD_DIM-1-j] = b[(BOARD_DIM-1-j)*BOARD_DIM+i];
+      b[(BOARD_DIM-1-j)*BOARD_DIM+i] = t;
+    }
+  }
+}
 
 bool GetTranspositionTableEntry(State &s, TTEntry **entry) {
   if (transposition_table.find(s.board) != transposition_table.end()) {
@@ -40,17 +52,16 @@ bool GetTranspositionTableEntry(State &s, TTEntry **entry) {
 }
 
 void AddTranspositionTableEntry(State &s, Move &bestmove, int alpha, int beta, int value, int depth) {
-  TTEntry new_entry = {bestmove, value, depth, 0};
+  transposition_table[s.board] = {bestmove, value, depth, 0};
   if (value <= alpha) {
-    new_entry.type = UPPER_BOUND;
+    transposition_table[s.board].type = UPPER_BOUND;
   }
   else if (value >= beta) {
-    new_entry.type = LOWER_BOUND;
+    transposition_table[s.board].type = LOWER_BOUND;
   }
   else {
-    new_entry.type = EXACT_VALUE;
+    transposition_table[s.board].type = EXACT_VALUE;
   }
-  transposition_table[s.board] = new_entry;
 }
 
 

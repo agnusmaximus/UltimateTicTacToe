@@ -40,8 +40,8 @@ int alphabeta(State &s, int depth, int a, int b, Move &choose, int top_level) {
 
   int alpha_original = a, beta_original = b;
   int best_score = INT_MIN;
-  vector<Move> moves;
   Move bestmove;
+  vector<Move> moves;
   GenerateValidMoves(s, moves);
   OrderMoves(s, moves, top_level-depth);
   for (auto &move : moves) {
@@ -73,7 +73,7 @@ int iterative_deepening(State &s, int depth, Move &move) {
     auto start_time = GetTimeMs();
     alphabeta(s, i, INT_MIN, INT_MAX, move, i);
     auto end_time = GetTimeMs();
-    printf("Depth %d [%d nodes %d ms]\n", i, nodes_searched, end_time-start_time);
+    printf("Depth %d [%d nodes, %d ms, %lf nodes per second]\n", i, nodes_searched, end_time-start_time, nodes_searched / (double)(end_time-start_time) * 1000);
   }
 }
 

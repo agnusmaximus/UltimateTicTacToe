@@ -18,7 +18,7 @@
 #define PLAYER_2 2
 #define SELF PLAYER_1
 
-#define DEPTH 11
+#define DEPTH 12
 
 using namespace std;
 using namespace std::chrono;
@@ -47,8 +47,9 @@ struct MoveSort {
     this->rdepth = rdepth;
   }
   inline bool operator() (const Move& m1, const Move& m2) {
-    return s->history[m1.x][m1.y][m1.who][rdepth] <
-        s->history[m2.x][m2.y][m2.who][rdepth];
+    return false;
+    return s->history[m1.x][m1.y][m1.who][rdepth] >
+    s->history[m2.x][m2.y][m2.who][rdepth];
   }
   State *s;
   int rdepth;
@@ -182,12 +183,14 @@ void GenerateValidMoves(State &s, vector<Move> &moves) {
       DidWinSubgrid(s, lastmove_subgrid_x, lastmove_subgrid_y, current_player) ||
       IsFilled(s.board.data(), lastmove_subgrid_x, lastmove_subgrid_y, BOARD_DIM);
 
+  int cur_subgrid_x = 0;
   for (int i = 0; i < BOARD_DIM; i++) {
+    if (i == 3 || i == 6) cur_subgrid_x = i;
+    int cur_subgrid_y = 0;
     for (int j = 0; j < BOARD_DIM; j++) {
+      if (j == 3 || j == 6) cur_subgrid_y = j;
       bool empty = s.board[i*BOARD_DIM+j] == EMPTY;
       if (empty) {
-        int cur_subgrid_x = i / (BOARD_DIM/3) * 3;
-        int cur_subgrid_y = j / (BOARD_DIM/3) * 3;
         bool is_in_target_subgrid = (cur_subgrid_x == lastmove_subgrid_x) && (cur_subgrid_y == lastmove_subgrid_y);
         if (can_move_anywhere || is_in_target_subgrid) {
           moves.push_back((Move){i, j, current_player});
