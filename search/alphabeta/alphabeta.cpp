@@ -4,18 +4,15 @@
 #include <stdlib.h>
 #include <limits.h>
 #include "headers/utils.h"
+#include "headers/transposition_table.h"
 
 using namespace std;
 
 static int nodes_searched = 0;
 
 int alphabeta(State &s, int depth, int a, int b, Move &choose, int top_level) {
-  nodes_searched += 1;
   if (DidWinGame(s, Other(s.cur_player))) {
-    if (s.cur_player == SELF) {
-      return INT_MIN;
-    }
-    return INT_MAX;
+    return INT_MIN;
   }
   if (IsFilled(s.results_board.data(), 0, 0, BOARD_DIM/3)) {
     return 0;
@@ -23,24 +20,40 @@ int alphabeta(State &s, int depth, int a, int b, Move &choose, int top_level) {
   if (depth <= 0) {
     return 0;
   }
-  int maximizing = s.cur_player == SELF;
-  int best_score = maximizing ? INT_MIN : INT_MAX;
+
+  TTEntry *entry = NULL;
+  if (GetTranspositionTableEntry(s, &entry) && entry->depth >= depth) {
+    if (entry->type == EXACT_VALUE) {
+      return entry->value;
+    }
+    else if (entry->type == LOWER_BOUND) {
+      a = entry->value;
+    }
+    else if (entry->type == UPPER_BOUND) {
+      b = entry->value;
+    }
+    if (a >= b) {
+      return entry->value;
+    }
+  }
+  nodes_searched += 1;
+
+  int alpha_original = a, beta_original = b;
+  int best_score = INT_MIN;
   vector<Move> moves;
+  Move bestmove;
   GenerateValidMoves(s, moves);
   OrderMoves(s, moves, top_level-depth);
   for (auto &move : moves) {
     PerformMove(s, move);
-    int subscore = alphabeta(s, depth-1, a, b, choose, false);
-    if (maximizing) {
-      best_score = max(best_score, subscore);
-      a = max(a, best_score);
-      if (top_level == depth && best_score == subscore) {
+    int subscore = -alphabeta(s, depth-1, -b, -a, choose, false);
+    best_score = max(best_score, subscore);
+    a = max(a, best_score);
+    if (best_score == subscore) {
+      bestmove = move;
+      if (top_level == depth) {
         choose = move;
       }
-    }
-    else {
-      best_score = min(best_score, subscore);
-      b = min(b, best_score);
     }
     UndoMove(s, move);
     if (a >= b) {
@@ -48,6 +61,9 @@ int alphabeta(State &s, int depth, int a, int b, Move &choose, int top_level) {
       break;
     }
   }
+
+  AddTranspositionTableEntry(s, bestmove, alpha_original, beta_original, a, depth);
+
   return best_score;
 }
 
