@@ -20,7 +20,7 @@
 int SELF = PLAYER_1;
 
 #define DEPTH 11
-const int TIME_LIMIT = 500000;
+int TIME_LIMIT = 500000;
 
 using namespace std;
 using namespace std::chrono;

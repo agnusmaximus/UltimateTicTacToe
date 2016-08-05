@@ -1,5 +1,5 @@
 #include "headers/utils.h"
-#include "alphabeta.h"
+#include "headers/alphabeta.h"
 
 using namespace std;
 

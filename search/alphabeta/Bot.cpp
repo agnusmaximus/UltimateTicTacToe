@@ -29,8 +29,8 @@
 #include <time.h>
 #include <vector>
 
-#include "utils.h"
-#include "alphabeta.h"
+#include "headers/utils.h"
+#include "headers/alphabeta.h"
 
 std::vector<std::string> &split(const std::string &s, char delim, std::vector<std::string> &elems) {
     std::stringstream ss(s);

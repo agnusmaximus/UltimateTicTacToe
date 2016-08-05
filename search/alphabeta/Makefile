@@ -14,4 +14,4 @@ memcheck:
 	valgrind --leak-check=full --track-origins=yes ./memcheck_bin
 bot:
 	rm -f bot_bin
-	g++ -Ofast --std=c++11 debug_run.cpp -o bot_bin
+	g++ -Ofast --std=c++11 Bot.cpp -o bot_bin
