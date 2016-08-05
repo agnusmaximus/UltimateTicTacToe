@@ -4,21 +4,21 @@ DEBUG_RUN=1
 
 playself:
 	rm -f playself_run
-	g++ -Ofast --std=c++11 Bot.cpp -DMETHOD=PLAY_DEBUG -o playself_run
+	g++ -Ofast --std=c++11 Bot.cpp -DMETHOD=PLAY_DEBUG -DVERBOSE=1 -o playself_run
 	./playself_run
 debug:
 	rm -f debug_run
-	g++ -Ofast --std=c++11 Bot.cpp -DMETHOD=DEBUG_RUN -o debug_run
+	g++ -Ofast --std=c++11 Bot.cpp -DMETHOD=DEBUG_RUN -DVERBOSE=1 -o debug_run
 	./debug_run
 profile:
 	rm -f profiling
 	rm -f callgrind.out.*
-	g++ -Ofast --std=c++11 Bot.cpp -DMETHOD=DEBUG_RUN -o profiling
+	g++ -Ofast --std=c++11 Bot.cpp -DMETHOD=DEBUG_RUN -DVERBOSE=1 -o profiling
 	valgrind --tool=callgrind ./profiling
 	callgrind_annotate callgrind.out.*
 memcheck:
 	rm -f memcheck_bin
-	g++ -Ofast --std=c++11 Bot.cpp -DMETHOD=DEBUG_RUN -o memcheck_bin
+	g++ -Ofast --std=c++11 Bot.cpp -DMETHOD=DEBUG_RUN -DVERBOSE=1 -o memcheck_bin
 	valgrind --leak-check=full --track-origins=yes ./memcheck_bin
 bot:
 	rm -f bot_bin

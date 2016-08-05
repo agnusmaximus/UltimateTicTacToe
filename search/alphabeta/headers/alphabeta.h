@@ -9,6 +9,10 @@
 #include "utils.h"
 #include "transposition_table.h"
 
+#ifndef VERBOSE
+#define VERBOSE 0
+#endif
+
 using namespace std;
 
 static int nodes_searched = 0;
@@ -99,9 +103,13 @@ int iterative_deepening(State &s, int depth, Move &move) {
     auto start_time = GetTimeMs();
     alphabeta(s, i, INT_MIN, INT_MAX, move, i, start_start_time);
     auto end_time = GetTimeMs();
-    printf("Depth %d [%d nodes, %d ms, %lf nodes per second]\n", i, nodes_searched, end_time-start_time, nodes_searched / (double)(end_time-start_time) * 1000);
+    if (VERBOSE) {
+	printf("Depth %d [%d nodes, %d ms, %lf nodes per second]\n", i, nodes_searched, end_time-start_time, nodes_searched / (double)(end_time-start_time) * 1000);
+    }
   }
-  printf("Overall time %d ms\n", GetTimeMs()-start_start_time);
+  if (VERBOSE) {
+      printf("Overall time %d ms\n", GetTimeMs()-start_start_time);
+  }
   return 0;
 }
 
