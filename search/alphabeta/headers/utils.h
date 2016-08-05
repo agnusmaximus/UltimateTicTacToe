@@ -18,7 +18,7 @@
 #define PLAYER_1 1
 #define PLAYER_2 2
 #define TIE 3
-#define DEPTH 7
+#define DEPTH 12
 
 #define MIN_VALUE (-1000000000)
 #define MAX_VALUE (1000000000)
@@ -50,29 +50,11 @@ struct State {
 };
 typedef struct State State;
 
-struct MoveSort {
-  MoveSort(State *state, Move *previous) {
-    this->s = state;
-    this->m = previous;
-  }
-  inline bool operator() (const Move& m1, const Move& m2) {
-      if (this->m != nullptr) {
-	  if (MoveEquals(m1, *this->m)) return true;
-	  if (MoveEquals(m2, *this->m)) return false;
-      }
-      return s->history[m1.x][m1.y][m1.who-1] >
-	  s->history[m2.x][m2.y][m2.who-1];
-  }
-  State *s;
-  Move *m;
-};
-
 int GetTimeMs() {
   milliseconds ms = duration_cast< milliseconds >(
       system_clock::now().time_since_epoch());
   return ms.count();
 }
-
 void PrintBoard(State &s) {
   for (int i = 0; i < BOARD_DIM; i++) {
     string line = "";
@@ -105,6 +87,32 @@ void PrintBoard(State &s) {
     cerr << endl;
   }
 }
+
+struct MoveSort {
+  MoveSort(State *state, Move *previous) {
+    this->s = state;
+    this->m = previous;
+  }
+
+  bool DoesGiveFreePlacement(const Move &m) {
+    int target_x = m.x%3;
+    int target_y = m.y%3;
+    return s->results_board[target_x*BOARD_DIM/3+target_y] != EMPTY;
+  }
+
+  inline bool operator() (const Move& m1, const Move& m2) {
+    if (DoesGiveFreePlacement(m1)) return false;
+    if (DoesGiveFreePlacement(m2)) return true;
+      if (this->m != nullptr) {
+	  if (MoveEquals(m1, *this->m)) return true;
+	  if (MoveEquals(m2, *this->m)) return false;
+      }
+      return s->history[m1.x][m1.y][m1.who-1] >
+	  s->history[m2.x][m2.y][m2.who-1];
+  }
+  State *s;
+  Move *m;
+};
 
 void Initialize(State &s) {
   srand(time(NULL));
@@ -187,7 +195,10 @@ void AddScore(State &s, Move &m, int value) {
 }
 
 void OrderMoves(State &s, vector<Move> &moves, Move *previous_best) {
-    sort(moves.begin(), moves.end(), MoveSort(&s, previous_best));
+  //printf("BEGIN...\n");
+  //printf("%d\n", moves.size());
+  sort(moves.begin(), moves.end(), MoveSort(&s, previous_best));
+  //printf("End...\n");
 }
 
 void GenerateValidMoves(State &s, vector<Move> &moves) {

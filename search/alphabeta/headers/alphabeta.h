@@ -39,7 +39,9 @@ int alphabeta(State &s, int depth, int a, int b, Move &choose, int top_level, in
     return 0;
   }
   if (depth <= 0 || GetTimeMs()-start_time >= TIME_LIMIT) {
+    //d=7 P1 wins: 302 P2 wins: 80 ties: 118
     //return evaluate(s, s.cur_player) - evaluate(s, Other(s.cur_player));
+    //d=7 P1 wins: 380 P2 wins: 63 ties: 57
     return 0;
   }
   TTEntry *entry = nullptr;
@@ -85,7 +87,7 @@ int alphabeta(State &s, int depth, int a, int b, Move &choose, int top_level, in
     }
   }
 
-  AddScore(s, bestmove, 1);
+  AddScore(s, bestmove, best_score);
   AddTranspositionTableEntry(s, bestmove, a, b, best_score, depth);
 
   return best_score;

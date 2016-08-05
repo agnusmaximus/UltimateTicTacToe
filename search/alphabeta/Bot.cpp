@@ -293,7 +293,7 @@ char DebugPlayRandom() {
 
 void DebugPlayRandomMany() {
   int p1_wins=0, p2_wins=0, tie=0;
-  for (int i = 0; i < 50; i++) {
+  for (int i = 0; i < 10; i++) {
     int win = DebugPlayRandom();
     if (win == PLAYER_1) {
       p1_wins++;
