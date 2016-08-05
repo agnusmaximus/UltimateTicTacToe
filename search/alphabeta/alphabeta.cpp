@@ -20,6 +20,7 @@ const int board_indices_[24] = {
   0, 1, 2, 9, 10, 11, 18, 19, 20,
   0, 9, 18, 1, 10, 19, 2, 11, 20,
   0, 10, 20, 2, 10, 18};
+const int board_win_ = 1000;
 const int results_board_line2_ = 1000;
 const int results_board_line1_ = 100;
 const int board_line2_ = 10;
@@ -30,6 +31,14 @@ int PositionEval(const array<char, 81>& board,
   int score = 0;
   int num_ones = 0;
   int num_twos = 0;
+
+  for(int i = 9; i < 9; ++i){
+    if(results_board[i] == 1){
+      score += board_win_;
+    } else if(results_board[i] == 2){
+      score -= board_win_;
+    }
+  }
 
   for(int i = 8; i < 8; ++i){
     num_ones = 0;

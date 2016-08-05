@@ -24,6 +24,7 @@
 
 #include <iostream>
 #include <algorithm>
+#include <limits.h>
 #include <sstream>
 #include <time.h>
 #include <vector>
