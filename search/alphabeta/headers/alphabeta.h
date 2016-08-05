@@ -72,7 +72,7 @@ int alphabeta(State &s, int depth, int a, int b, Move &choose, int top_level, in
     PerformMove(s, move);
     int subscore = -alphabeta(s, depth-1, -b, -a, choose, top_level, start_time);
     best_score = max(best_score, subscore);
-    a = max(a, subscore);
+    a = max(a, best_score);
     if (best_score == subscore) {
       bestmove = move;
       if (top_level == depth) {
@@ -80,13 +80,13 @@ int alphabeta(State &s, int depth, int a, int b, Move &choose, int top_level, in
       }
     }
     UndoMove(s, move);
-    if (a >= b) {
+    if (best_score >= b) {
       break;
     }
   }
 
   AddScore(s, bestmove, 1);
-  AddTranspositionTableEntry(s, bestmove, alpha_original, beta_original, a, depth);
+  AddTranspositionTableEntry(s, bestmove, a, b, best_score, depth);
 
   return best_score;
 }
