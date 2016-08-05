@@ -124,7 +124,7 @@ private:
         Move bestmove;
 	iterative_deepening(s, DEPTH, bestmove);
 	PerformMove(s, bestmove);
-	prev_state[bestmove.x*9+bestmove.y] = s.cur_player;
+	prev_state[bestmove.x*9+bestmove.y] = _botId;
         fprintf(stderr, "New State after move: \n");
         PrintBoard(s);
         return std::make_pair(bestmove.y, bestmove.x);
