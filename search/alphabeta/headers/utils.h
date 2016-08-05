@@ -23,7 +23,7 @@
 #define MIN_VALUE (-1000000000)
 #define MAX_VALUE (1000000000)
 
-int TIME_LIMIT = 50000000;
+int TIME_LIMIT = 5000;
 
 using namespace std;
 using namespace std::chrono;
