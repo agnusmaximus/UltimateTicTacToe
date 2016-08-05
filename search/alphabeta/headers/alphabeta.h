@@ -9,19 +9,15 @@
 #include "utils.h"
 #include "transposition_table.h"
 
-#ifndef VERBOSE
-#define VERBOSE 0
-#endif
-
 using namespace std;
 
 static int nodes_searched = 0;
 
-int evaluate(State &s) {
+int evaluate(State &s, char player) {
     int score = 0;
     for (int i = 0; i < 9; i+=3) {
 	for (int j = 0; j < 9; j+=3) {
-	    if (DidWin(s.board.data(), i, j, BOARD_DIM, s.cur_player)) {
+	    if (DidWin(s.board.data(), i, j, BOARD_DIM, player)) {
 		score += 100;
 		if (i == 3 && j == 3) {
 		    score += 100;
@@ -40,9 +36,8 @@ int alphabeta(State &s, int depth, int a, int b, Move &choose, int top_level, in
     return 0;
   }
   if (depth <= 0 || GetTimeMs()-start_time >= TIME_LIMIT) {
-    return evaluate(s);
+    return evaluate(s, s.cur_player) - evaluate(s, Other(s.cur_player));
   }
-
   TTEntry *entry = nullptr;
   Move *previous_best = nullptr;
   if (GetTranspositionTableEntry(s, &entry) && entry->depth >= depth) {
@@ -87,13 +82,14 @@ int alphabeta(State &s, int depth, int a, int b, Move &choose, int top_level, in
   }
 
   AddScore(s, bestmove, 1);
-  AddTranspositionTableEntry(s, bestmove, alpha_original, beta_original, a, depth);
+  //AddTranspositionTableEntry(s, bestmove, alpha_original, beta_original, a, depth);
 
   return best_score;
 }
 
 int iterative_deepening(State &s, int depth, Move &move) {
   ResetTranspositionTable();
+  int score = 0;
   auto start_start_time = GetTimeMs();
   for (int i = 1; i <= depth; i++) {
     if (GetTimeMs() - start_start_time >= TIME_LIMIT) {
@@ -101,15 +97,11 @@ int iterative_deepening(State &s, int depth, Move &move) {
     }
     nodes_searched = 0;
     auto start_time = GetTimeMs();
-    alphabeta(s, i, INT_MIN, INT_MAX, move, i, start_start_time);
+    score = alphabeta(s, i, INT_MIN, INT_MAX, move, i, start_start_time);
     auto end_time = GetTimeMs();
-    if (VERBOSE) {
-	printf("Depth %d [%d nodes, %d ms, %lf nodes per second]\n", i, nodes_searched, end_time-start_time, nodes_searched / (double)(end_time-start_time) * 1000);
-    }
+    fprintf(stderr, "Depth %d [%d nodes, %d ms, %lf nodes per second]\n", i, nodes_searched, end_time-start_time, nodes_searched / (double)(end_time-start_time) * 1000);
   }
-  if (VERBOSE) {
-      printf("Overall time %d ms\n", GetTimeMs()-start_start_time);
-  }
+  fprintf(stderr, "Overall time %d ms, Score: %d\n", GetTimeMs()-start_start_time, score);
   return 0;
 }
 

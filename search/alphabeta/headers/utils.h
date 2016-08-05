@@ -19,8 +19,8 @@
 #define PLAYER_2 2
 int SELF = PLAYER_1;
 
-#define DEPTH 8
-int TIME_LIMIT = 500000;
+#define DEPTH 12
+int TIME_LIMIT = 50000000;
 
 using namespace std;
 using namespace std::chrono;
@@ -95,6 +95,12 @@ void PrintBoard(State &s) {
     }
     cout << line << endl;
   }
+  for (int i = 0; i < BOARD_DIM/3; i++) {
+    for (int j = 0; j < BOARD_DIM/3; j++) {
+      cout << (int)s.results_board[i*BOARD_DIM/3+j];
+    }
+    cout << endl;
+  }
 }
 
 void Initialize(State &s) {
@@ -133,7 +139,7 @@ bool DidWin(char *data, int x, int y, int ldim, char who) {
   }
   bool diag1 = data[x*ldim+y] == who &&
       data[(x+1)*ldim+(y+1)] == who &&
-      data[(x+2)*ldim+(y+2)];
+      data[(x+2)*ldim+(y+2)] == who;
   bool diag2 = data[x*ldim+y+2] == who &&
       data[(x+1)*ldim+(y+1)] == who &&
       data[(x+2)*ldim+y] == who;
@@ -141,6 +147,11 @@ bool DidWin(char *data, int x, int y, int ldim, char who) {
 }
 
 bool DidWinSubgrid(State &s, int subgrid_x, int subgrid_y, char who) {
+  /*if (DidWin(s.board.data(), subgrid_x, subgrid_y, BOARD_DIM, who)) {
+    cout << "YOOOOOOOOOOO:" << (int)who << " " << subgrid_x << " " << subgrid_y << endl;
+    PrintBoard(s);
+    }*/
+
   return DidWin(s.board.data(), subgrid_x, subgrid_y, BOARD_DIM, who);
 }
 
@@ -151,7 +162,7 @@ bool DidWinGame(State &s, char who) {
 void PerformMove(State &s, Move &m) {
   int index = m.x * BOARD_DIM + m.y;
   s.board[index] = m.who;
-  if (DidWinSubgrid(s, m.x/3, m.y/3, m.who)) {
+  if (DidWinSubgrid(s, m.x/3 * 3, m.y/3 * 3, m.who)) {
     int results_index = (m.x / 3) * (BOARD_DIM / 3) + (m.y / 3);
     s.results_board[results_index] = m.who;
   }
@@ -195,7 +206,9 @@ void GenerateValidMoves(State &s, vector<Move> &moves) {
   if (can_move_anywhere) {
       for (int i = 0; i < BOARD_DIM; i++) {
 	  for (int j = 0; j < BOARD_DIM; j++) {
-	      if (s.board[i*BOARD_DIM+j] == EMPTY) {
+            int subgrid_x = i/3;
+            int subgrid_y = j/3;
+	      if (s.board[i*BOARD_DIM+j] == EMPTY && s.results_board[subgrid_x*BOARD_DIM/3+subgrid_y] == EMPTY) {
 		  moves.push_back((Move){i, j, current_player});
 	      }
 	  }
