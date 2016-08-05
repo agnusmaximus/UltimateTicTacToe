@@ -19,7 +19,8 @@
 #define PLAYER_2 2
 #define SELF PLAYER_1
 
-#define DEPTH 12
+#define DEPTH 13
+#define TIME_LIMIT 50000
 
 using namespace std;
 using namespace std::chrono;
@@ -30,6 +31,10 @@ struct Move {
 };
 typedef struct Move Move;
 
+bool MoveEquals(const Move &m1, const Move &m2) {
+    return m1.x==m2.x && m1.y==m2.y && m1.who==m2.who;
+}
+
 struct State {
   // Basic info.
   array<char, BOARD_DIM> results_board;
@@ -38,22 +43,25 @@ struct State {
   char cur_player;
 
   // History heuristic.
-  int history[BOARD_DIM][BOARD_DIM][2][DEPTH];
+  int history[BOARD_DIM][BOARD_DIM][2];
 };
 typedef struct State State;
 
 struct MoveSort {
-  MoveSort(State *state, int rdepth) {
+  MoveSort(State *state, Move *previous) {
     this->s = state;
-    this->rdepth = rdepth;
+    this->m = previous;
   }
   inline bool operator() (const Move& m1, const Move& m2) {
-    return false;
-    return s->history[m1.x][m1.y][m1.who][rdepth] >
-    s->history[m2.x][m2.y][m2.who][rdepth];
+      if (this->m != nullptr) {
+	  if (MoveEquals(m1, *this->m)) return true;
+	  if (MoveEquals(m2, *this->m)) return false;
+      }
+      return s->history[m1.x][m1.y][m1.who-1] >
+	  s->history[m2.x][m2.y][m2.who-1];
   }
   State *s;
-  int rdepth;
+  Move *m;
 };
 
 int GetTimeMs() {
@@ -92,7 +100,7 @@ void PrintBoard(State &s) {
 void Initialize(State &s) {
   memset(s.results_board.data(), 0, sizeof(char) * BOARD_DIM);
   memset(s.board.data(), 0, sizeof(char) * BOARD_DIM * BOARD_DIM);
-  memset(s.history, 0, sizeof(int) * BOARD_DIM * BOARD_DIM * 2 * DEPTH);
+  memset(s.history, 0, sizeof(int) * BOARD_DIM * BOARD_DIM * 2);
   s.cur_player = PLAYER_1;
 }
 
@@ -160,12 +168,12 @@ void UndoMove(State &s, Move &m) {
   s.moves.pop_back();
 }
 
-void AddCutoff(State &s, Move &m, int rdepth) {
-  s.history[m.x][m.y][m.who][rdepth]++;
+void AddScore(State &s, Move &m, int value) {
+  s.history[m.x][m.y][m.who-1] += value;
 }
 
-void OrderMoves(State &s, vector<Move> &moves, int rdepth) {
-  sort(moves.begin(), moves.end(), MoveSort(&s, rdepth));
+void OrderMoves(State &s, vector<Move> &moves, Move *previous_best) {
+    sort(moves.begin(), moves.end(), MoveSort(&s, previous_best));
 }
 
 void GenerateValidMoves(State &s, vector<Move> &moves) {
@@ -184,20 +192,23 @@ void GenerateValidMoves(State &s, vector<Move> &moves) {
       DidWinSubgrid(s, lastmove_subgrid_x, lastmove_subgrid_y, current_player) ||
       IsFilled(s.board.data(), lastmove_subgrid_x, lastmove_subgrid_y, BOARD_DIM);
 
-  int cur_subgrid_x = 0;
-  for (int i = 0; i < BOARD_DIM; i++) {
-    if (i == 3 || i == 6) cur_subgrid_x = i;
-    int cur_subgrid_y = 0;
-    for (int j = 0; j < BOARD_DIM; j++) {
-      if (j == 3 || j == 6) cur_subgrid_y = j;
-      bool empty = s.board[i*BOARD_DIM+j] == EMPTY;
-      if (empty) {
-        bool is_in_target_subgrid = (cur_subgrid_x == lastmove_subgrid_x) && (cur_subgrid_y == lastmove_subgrid_y);
-        if (can_move_anywhere || is_in_target_subgrid) {
-          moves.push_back((Move){i, j, current_player});
-        }
+  if (can_move_anywhere) {
+      for (int i = 0; i < BOARD_DIM; i++) {
+	  for (int j = 0; j < BOARD_DIM; j++) {
+	      if (s.board[i*BOARD_DIM+j] == EMPTY) {
+		  moves.push_back((Move){i, j, current_player});
+	      }
+	  }
       }
-    }
+  }
+  else {
+      for (int i = lastmove_subgrid_x; i < lastmove_subgrid_x + 3; i++) {
+	  for (int j = lastmove_subgrid_y; j < lastmove_subgrid_y  + 3; j++) {
+	      if (s.board[i*BOARD_DIM+j] == EMPTY) {
+		  moves.push_back((Move){i, j, current_player});
+	      }
+	  }
+      }
   }
 
   if (DEBUG) {

@@ -52,16 +52,22 @@ bool GetTranspositionTableEntry(State &s, TTEntry **entry) {
 }
 
 void AddTranspositionTableEntry(State &s, Move &bestmove, int alpha, int beta, int value, int depth) {
-  transposition_table[s.board] = {bestmove, value, depth, 0};
-  if (value <= alpha) {
-    transposition_table[s.board].type = UPPER_BOUND;
-  }
-  else if (value >= beta) {
-    transposition_table[s.board].type = LOWER_BOUND;
-  }
-  else {
-    transposition_table[s.board].type = EXACT_VALUE;
-  }
+    array<char, BOARD_DIM*BOARD_DIM> bb = s.board;
+    for (int i = 0; i < 4; i++) {
+	TTEntry entry = {bestmove, value, depth, 0};
+	entry = {bestmove, value, depth, 0};
+	if (value <= alpha) {
+	    entry.type = UPPER_BOUND;
+	}
+	else if (value >= beta) {
+	    entry.type = LOWER_BOUND;
+	}
+	else {
+	    entry.type = EXACT_VALUE;
+	}
+	transposition_table[bb] = entry;
+	RotateBoard(bb);
+    }
 }
 
 
