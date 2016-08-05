@@ -96,13 +96,13 @@ void PrintBoard(State &s) {
         line += ".";
       }
     }
-    cout << line << endl;
+    cerr << line << endl;
   }
   for (int i = 0; i < BOARD_DIM/3; i++) {
     for (int j = 0; j < BOARD_DIM/3; j++) {
-      cout << (int)s.results_board[i*BOARD_DIM/3+j];
+      cerr << (int)s.results_board[i*BOARD_DIM/3+j];
     }
-    cout << endl;
+    cerr << endl;
   }
 }
 
@@ -233,11 +233,11 @@ void GenerateValidMoves(State &s, vector<Move> &moves) {
 
   if (DEBUG) {
     PrintBoard(s);
-    cout << "Moves:";
+    cerr << "Moves:";
     for (auto &move : moves) {
-      cout << "{" << move.x << " " << move.y << " " << (int)move.who << "} ";
+      cerr << "{" << move.x << " " << move.y << " " << (int)move.who << "} ";
     }
-    cout << endl;
+    cerr << endl;
   }
 }
 

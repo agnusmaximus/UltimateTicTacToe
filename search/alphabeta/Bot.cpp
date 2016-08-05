@@ -112,16 +112,21 @@ private:
 	for (int i = 0; i < 81; i++) {
 	    if (prev_state[i] != _field[i]) {
 		lastmove = (Move){i / 9, i % 9, Other(s.cur_player)};
+                fprintf(stderr, "Last Move: %d %d %d\n", lastmove.x, lastmove.y, lastmove.who);
 		prev_state[i] = _field[i];
 	    }
 	}
 	if (lastmove.who != -1) {
 	    PerformMove(s, lastmove);
 	}
+        fprintf(stderr, "Current State: \n");
+        PrintBoard(s);
         Move bestmove;
 	iterative_deepening(s, DEPTH, bestmove);
 	PerformMove(s, bestmove);
 	prev_state[bestmove.x*9+bestmove.y] = s.cur_player;
+        fprintf(stderr, "New State after move: \n");
+        PrintBoard(s);
         return std::make_pair(bestmove.y, bestmove.x);
     }
 
