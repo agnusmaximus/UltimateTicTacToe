@@ -4,10 +4,10 @@
 #include <array>
 #include <algorithm>
 #include <iostream>
-#include <string.h>
 #include <chrono>
-#include <stdlib.h>
 #include <map>
+#include <stdlib.h>
+#include <string.h>
 #include <unordered_map>
 #include <vector>
 
@@ -183,7 +183,7 @@ void GenerateValidMoves(State &s, vector<Move> &moves) {
       DidWinSubgrid(s, lastmove_subgrid_x, lastmove_subgrid_y, lastmove->who) ||
       DidWinSubgrid(s, lastmove_subgrid_x, lastmove_subgrid_y, current_player) ||
       IsFilled(s.board.data(), lastmove_subgrid_x, lastmove_subgrid_y, BOARD_DIM);
-
+      
   int cur_subgrid_x = 0;
   for (int i = 0; i < BOARD_DIM; i++) {
     if (i == 3 || i == 6) cur_subgrid_x = i;

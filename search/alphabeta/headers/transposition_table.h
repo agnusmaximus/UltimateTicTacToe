@@ -20,12 +20,15 @@ typedef struct TTEntry TTEntry;
 
 struct BoardHasher {
   size_t operator() (const array<char, BOARD_DIM*BOARD_DIM> &b) const {
-    size_t hash = 0;
-    for (int i = 0; i < BOARD_DIM*BOARD_DIM; i++) {
-      hash *= 3;
-      hash += (size_t)b[i];
+    std::size_t seed = 0;
+
+    int64_t* ptr = (int64_t*)&b;
+    for(int i = 0; i < 10; i += 1){
+      seed = seed ^ ptr[i];
+      seed = (seed << 1) | (seed >> 63);
     }
-    return hash;
+    seed = seed ^ b[80];
+    return seed;
   }
 };
 
