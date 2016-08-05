@@ -79,7 +79,7 @@ public:
         _field.resize(81);
         _macroboard.resize(9);
         Initialize(s);
-        s.cur_player = char(_botId);
+        s.cur_player = (char)PLAYER_1;
 	for (int i = 0; i < 81; i++) {
 	    prev_state.push_back(0);
 	}
@@ -111,7 +111,7 @@ private:
 	Move lastmove = {-1, -1, -1};
 	for (int i = 0; i < 81; i++) {
 	    if (prev_state[i] != _field[i]) {
-		lastmove = (Move){i / 9, i % 9, Other(s.cur_player)};
+		lastmove = (Move){i / 9, i % 9, s.cur_player};
                 fprintf(stderr, "Last Move: %d %d %d\n", lastmove.x, lastmove.y, lastmove.who);
 		prev_state[i] = _field[i];
 	    }
