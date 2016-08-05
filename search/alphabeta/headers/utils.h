@@ -17,9 +17,9 @@
 #define EMPTY 0
 #define PLAYER_1 1
 #define PLAYER_2 2
-#define SELF PLAYER_1
+int SELF = PLAYER_1;
 
-#define DEPTH 13
+#define DEPTH 4
 #define TIME_LIMIT 50000
 
 using namespace std;
@@ -39,7 +39,7 @@ struct State {
   // Basic info.
   array<char, BOARD_DIM> results_board;
   array<char, BOARD_DIM*BOARD_DIM> board;
-  vector<Move *> moves;
+  vector<Move> moves;
   char cur_player;
 
   // History heuristic.
@@ -155,7 +155,7 @@ void PerformMove(State &s, Move &m) {
     int results_index = (m.x / 3) * (BOARD_DIM / 3) + (m.y / 3);
     s.results_board[results_index] = m.who;
   }
-  s.moves.push_back(&m);
+  s.moves.push_back(m);
   s.cur_player = Other(s.cur_player);
 }
 
@@ -179,7 +179,7 @@ void OrderMoves(State &s, vector<Move> &moves, Move *previous_best) {
 void GenerateValidMoves(State &s, vector<Move> &moves) {
   Move *lastmove = NULL;
   if (s.moves.size() > 0) {
-    lastmove = s.moves[s.moves.size()-1];
+    lastmove = &s.moves[s.moves.size()-1];
   }
   char current_player = s.cur_player;
   int lastmove_subgrid_x = -1, lastmove_subgrid_y = -1;
@@ -191,6 +191,7 @@ void GenerateValidMoves(State &s, vector<Move> &moves) {
       DidWinSubgrid(s, lastmove_subgrid_x, lastmove_subgrid_y, lastmove->who) ||
       DidWinSubgrid(s, lastmove_subgrid_x, lastmove_subgrid_y, current_player) ||
       IsFilled(s.board.data(), lastmove_subgrid_x, lastmove_subgrid_y, BOARD_DIM);
+
 
   if (can_move_anywhere) {
       for (int i = 0; i < BOARD_DIM; i++) {

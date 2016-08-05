@@ -19,17 +19,21 @@ struct TTEntry {
 typedef struct TTEntry TTEntry;
 
 struct BoardHasher {
-  size_t operator() (const array<char, BOARD_DIM*BOARD_DIM> &b) const {
-    size_t hash = 0;
-    for (int i = 0; i < BOARD_DIM*BOARD_DIM; i++) {
-      hash *= 3;
-      hash += (size_t)b[i];
+    size_t operator() (const array<char, BOARD_DIM*BOARD_DIM> &b) const {
+	size_t hash = 0;
+	for (int i = 0; i < BOARD_DIM*BOARD_DIM; i++) {
+	    hash *= 3;
+	    hash += (size_t)b[i];
+	}
+	return hash;
     }
-    return hash;
-  }
 };
 
 unordered_map<array<char, BOARD_DIM*BOARD_DIM>, TTEntry, BoardHasher> transposition_table;
+
+void ResetTranspositionTable() {
+    transposition_table.clear();
+}
 
 void RotateBoard(array<char, BOARD_DIM*BOARD_DIM> &b) {
   for (int i = 0; i < BOARD_DIM/2; i++) {

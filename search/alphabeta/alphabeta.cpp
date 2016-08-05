@@ -64,7 +64,7 @@ int alphabeta(State &s, int depth, int a, int b, Move &choose, int top_level, in
   for (int i = 0; i < (int)moves.size(); i++) {
     Move move = moves[i];
     PerformMove(s, move);
-    int subscore = -alphabeta(s, depth-1, -b, -a, choose, false, start_time);
+    int subscore = -alphabeta(s, depth-1, -b, -a, choose, top_level, start_time);
     best_score = max(best_score, subscore);
     a = max(a, best_score);
     if (best_score == subscore) {
@@ -86,6 +86,7 @@ int alphabeta(State &s, int depth, int a, int b, Move &choose, int top_level, in
 }
 
 int iterative_deepening(State &s, int depth, Move &move) {
+  ResetTranspositionTable();
   auto start_start_time = GetTimeMs();
   for (int i = 1; i <= depth; i++) {
     if (GetTimeMs() - start_start_time >= TIME_LIMIT) {
@@ -101,9 +102,28 @@ int iterative_deepening(State &s, int depth, Move &move) {
   return 0;
 }
 
-int main(void) {
+void DebugPlaySelf() {
+  State s;
+  Move bestmove;
+  Initialize(s);
+  string input = "";
+  for (int i = 0; i < 1000; i++) {
+      iterative_deepening(s, DEPTH, bestmove);
+      PerformMove(s, bestmove);
+      PrintBoard(s);
+      SELF = Other(SELF);
+      cin >> input;
+  }
+}
+
+void DebugRun() {
   State s;
   Move bestmove;
   Initialize(s);
   iterative_deepening(s, DEPTH, bestmove);
+}
+
+int main(void) {
+    //DebugPlaySelf();
+    DebugRun();
 }
