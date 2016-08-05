@@ -24,7 +24,7 @@ debug:
 profile:
 	rm -f profiling
 	rm -f callgrind.out.*
-	g++ -Ofast --std=c++11 Bot.cpp -DMETHOD=DEBUG_RUN -o profiling
+	g++ -g -Ofast --std=c++11 Bot.cpp -DMETHOD=DEBUG_RUN -o profiling
 	valgrind --tool=callgrind ./profiling
 	callgrind_annotate callgrind.out.*
 memcheck:
