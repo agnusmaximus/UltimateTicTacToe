@@ -75,6 +75,7 @@ int iterative_deepening(State &s, int depth, Move &move) {
     auto end_time = GetTimeMs();
     printf("Depth %d [%d nodes, %d ms, %lf nodes per second]\n", i, nodes_searched, end_time-start_time, nodes_searched / (double)(end_time-start_time) * 1000);
   }
+  return 0;
 }
 
 int main(void) {

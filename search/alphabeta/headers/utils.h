@@ -1,6 +1,7 @@
 #ifndef _UTILS_
 #define _UTILS_
 
+#include <array>
 #include <algorithm>
 #include <iostream>
 #include <string.h>
