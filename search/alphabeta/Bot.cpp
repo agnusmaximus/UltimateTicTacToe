@@ -77,7 +77,11 @@ public:
         srand(static_cast<unsigned int>(time(0)));
         _field.resize(81);
         _macroboard.resize(9);
-
+        Initialize(s);
+        s.cur_player = char(_botId);
+	for (int i = 0; i < 81; i++) {
+	    prev_state.push_back(0);
+	}
     }
 
 
@@ -92,6 +96,8 @@ public:
     }
 
 private:
+    State s;
+    vector<int> prev_state;
 
     /**
      * Implement this function.
@@ -101,24 +107,21 @@ private:
      *      (use std::make_pair(x, y))
      */
     std::pair<int, int> action(const std::string &type, int time) {
-        State s;
-	TIME_LIMIT = time;
-        Initialize(s);
-        for(int i = 0; i < 81; ++i){
-            s.board[i] = char(_field[i]);
-        }
-        for(int i = 0; i < 9; ++i){
-	    if (_macroboard[i] == -1) {
-		s.results_board[i] = 0;
+	Move lastmove = {-1, -1, -1};
+	for (int i = 0; i < 81; i++) {
+	    if (prev_state[i] != _field[i]) {
+		lastmove = (Move){i / 9, i % 9, Other(s.cur_player)};
+		prev_state[i] = _field[i];
 	    }
-	    else {
-		s.results_board[i] = char(_macroboard[i]);
-	    }
-        }
-        s.cur_player = char(_botId);
+	}
+	if (lastmove.who != -1) {
+	    PerformMove(s, lastmove);
+	}
         Move bestmove;
 	iterative_deepening(s, DEPTH, bestmove);
-        return std::make_pair(bestmove.x, bestmove.y);
+	PerformMove(s, bestmove);
+	prev_state[bestmove.x*9+bestmove.y] = s.cur_player;
+        return std::make_pair(bestmove.y, bestmove.x);
     }
 
     /**

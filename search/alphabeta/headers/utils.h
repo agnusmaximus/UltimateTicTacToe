@@ -192,7 +192,6 @@ void GenerateValidMoves(State &s, vector<Move> &moves) {
       DidWinSubgrid(s, lastmove_subgrid_x, lastmove_subgrid_y, current_player) ||
       IsFilled(s.board.data(), lastmove_subgrid_x, lastmove_subgrid_y, BOARD_DIM);
 
-
   if (can_move_anywhere) {
       for (int i = 0; i < BOARD_DIM; i++) {
 	  for (int j = 0; j < BOARD_DIM; j++) {
