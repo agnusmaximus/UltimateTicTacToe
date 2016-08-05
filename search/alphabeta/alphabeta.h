@@ -1,3 +1,6 @@
+#ifndef _ALPHA_BETA_
+#define _ALPHA_BETA_
+
 #include <iostream>
 #include <vector>
 #include <string>
@@ -102,28 +105,4 @@ int iterative_deepening(State &s, int depth, Move &move) {
   return 0;
 }
 
-void DebugPlaySelf() {
-  State s;
-  Move bestmove;
-  Initialize(s);
-  string input = "";
-  for (int i = 0; i < 1000; i++) {
-      iterative_deepening(s, DEPTH, bestmove);
-      PerformMove(s, bestmove);
-      PrintBoard(s);
-      SELF = Other(SELF);
-      cin >> input;
-  }
-}
-
-void DebugRun() {
-  State s;
-  Move bestmove;
-  Initialize(s);
-  iterative_deepening(s, DEPTH, bestmove);
-}
-
-int main(void) {
-    //DebugPlaySelf();
-    DebugRun();
-}
+#endif
