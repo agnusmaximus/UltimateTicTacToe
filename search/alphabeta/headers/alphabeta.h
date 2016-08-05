@@ -32,6 +32,9 @@ int alphabeta(State &s, int depth, int a, int b, Move &choose, int top_level, in
   if (DidWinGame(s, Other(s.cur_player))) {
     return INT_MIN;
   }
+  if (DidWinGame(s, s.cur_player)) {
+    return INT_MAX;
+  }
   if (IsFilled(s.results_board.data(), 0, 0, BOARD_DIM/3)) {
     return 0;
   }
@@ -82,7 +85,7 @@ int alphabeta(State &s, int depth, int a, int b, Move &choose, int top_level, in
   }
 
   AddScore(s, bestmove, 1);
-  //AddTranspositionTableEntry(s, bestmove, alpha_original, beta_original, a, depth);
+  AddTranspositionTableEntry(s, bestmove, alpha_original, beta_original, a, depth);
 
   return best_score;
 }

@@ -239,8 +239,12 @@ void DebugPlaySelf() {
       iterative_deepening(s, DEPTH, bestmove);
       PerformMove(s, bestmove);
       PrintBoard(s);
-      SELF = Other(SELF);
-      cin >> input;
+      if (DidWinGame(s, PLAYER_1) ||
+          DidWinGame(s, PLAYER_2) ||
+          IsFilled(s.results_board.data(), 0, 0, BOARD_DIM/3)) {
+        break;
+      }
+      //cin >> input;
   }
 }
 

@@ -17,9 +17,8 @@
 #define EMPTY 0
 #define PLAYER_1 1
 #define PLAYER_2 2
-int SELF = PLAYER_1;
-
-#define DEPTH 12
+#define TIE 3
+#define DEPTH 8
 int TIME_LIMIT = 50000000;
 
 using namespace std;
@@ -156,6 +155,8 @@ bool DidWinSubgrid(State &s, int subgrid_x, int subgrid_y, char who) {
 }
 
 bool DidWinGame(State &s, char who) {
+  if (DidWin(s.results_board.data(), 0, 0, BOARD_DIM/3, who)) {
+  }
   return DidWin(s.results_board.data(), 0, 0, BOARD_DIM/3, who);
 }
 
@@ -165,6 +166,10 @@ void PerformMove(State &s, Move &m) {
   if (DidWinSubgrid(s, m.x/3 * 3, m.y/3 * 3, m.who)) {
     int results_index = (m.x / 3) * (BOARD_DIM / 3) + (m.y / 3);
     s.results_board[results_index] = m.who;
+  }
+  if (IsFilled(s.board.data(), m.x/3*3, m.y/3*3, BOARD_DIM)) {
+    int results_index = (m.x / 3) * (BOARD_DIM / 3) + (m.y / 3);
+    s.results_board[results_index] = TIE;
   }
   s.moves.push_back(m);
   s.cur_player = Other(s.cur_player);

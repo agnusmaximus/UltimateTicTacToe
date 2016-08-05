@@ -1,0 +1,385 @@
+--------------------------------------------------------------------------------
+Profile data file 'callgrind.out.14137' (creator: callgrind-3.10.1)
+--------------------------------------------------------------------------------
+I1 cache: 
+D1 cache: 
+LL cache: 
+Timerange: Basic block 0 - 97978693
+Trigger: Program termination
+Profiled target:  ./a.out (PID 14137, part 1)
+Events recorded:  Ir
+Events shown:     Ir
+Event sort order: Ir
+Thresholds:       99
+Include dirs:     
+User annotated:   headers/transposition_table.h
+                  alphabeta.cpp
+                  headers/utils.h
+Auto-annotation:  off
+
+--------------------------------------------------------------------------------
+         Ir 
+--------------------------------------------------------------------------------
+527,469,776  PROGRAM TOTALS
+
+--------------------------------------------------------------------------------
+         Ir  file:function
+--------------------------------------------------------------------------------
+150,411,109  headers/utils.h:GenerateValidMoves(State&, std::vector<Move, std::allocator<Move> >&) [/usr/local/google/home/agnusmaximus/Desktop/UltimateTicTacToe/search/alphabeta/a.out]
+ 55,630,497  headers/transposition_table.h:std::__detail::_Map_base<std::array<char, 81ul>, std::pair<std::array<char, 81ul> const, TTEntry>, std::allocator<std::pair<std::array<char, 81ul> const, TTEntry> >, std::__detail::_Select1st, std::equal_to<std::array<char, 81ul> >, BoardHasher, std::__detail::_Mod_range_hashing, std::__detail::_Default_ranged_hash, std::__detail::_Prime_rehash_policy, std::__detail::_Hashtable_traits<true, false, true>, true>::operator[](std::array<char, 81ul> const&)
+ 45,598,716  headers/transposition_table.h:GetTranspositionTableEntry(State&, TTEntry**) [/usr/local/google/home/agnusmaximus/Desktop/UltimateTicTacToe/search/alphabeta/a.out]
+ 37,986,349  /build/eglibc-oGUzwX/eglibc-2.19/malloc/malloc.c:_int_free [/lib/x86_64-linux-gnu/libc-2.19.so]
+ 37,749,311  /build/eglibc-oGUzwX/eglibc-2.19/malloc/malloc.c:_int_malloc [/lib/x86_64-linux-gnu/libc-2.19.so]
+ 19,480,361  headers/utils.h:void std::__insertion_sort<__gnu_cxx::__normal_iterator<Move*, std::vector<Move, std::allocator<Move> > >, MoveSort>(__gnu_cxx::__normal_iterator<Move*, std::vector<Move, std::allocator<Move> > >, __gnu_cxx::__normal_iterator<Move*, std::vector<Move, std::allocator<Move> > >, MoveSort)
+ 19,271,679  /build/eglibc-oGUzwX/eglibc-2.19/malloc/malloc.c:malloc [/lib/x86_64-linux-gnu/libc-2.19.so]
+ 18,162,027  /usr/include/c++/4.8/bits/stl_algo.h:void std::__insertion_sort<__gnu_cxx::__normal_iterator<Move*, std::vector<Move, std::allocator<Move> > >, MoveSort>(__gnu_cxx::__normal_iterator<Move*, std::vector<Move, std::allocator<Move> > >, __gnu_cxx::__normal_iterator<Move*, std::vector<Move, std::allocator<Move> > >, MoveSort) [/usr/local/google/home/agnusmaximus/Desktop/UltimateTicTacToe/search/alphabeta/a.out]
+ 17,948,106  headers/utils.h:alphabeta(State&, int, int, int, Move&, int)'2
+ 14,158,478  alphabeta.cpp:alphabeta(State&, int, int, int, Move&, int)'2 [/usr/local/google/home/agnusmaximus/Desktop/UltimateTicTacToe/search/alphabeta/a.out]
+ 14,069,462  headers/utils.h:DidWin(char*, int, int, int, char) [clone .constprop.77] [/usr/local/google/home/agnusmaximus/Desktop/UltimateTicTacToe/search/alphabeta/a.out]
+ 13,037,606  /usr/include/c++/4.8/ext/new_allocator.h:void std::vector<Move, std::allocator<Move> >::_M_emplace_back_aux<Move>(Move&&)
+  7,687,267  /usr/include/c++/4.8/bits/vector.tcc:void std::vector<Move, std::allocator<Move> >::_M_emplace_back_aux<Move>(Move&&) [/usr/local/google/home/agnusmaximus/Desktop/UltimateTicTacToe/search/alphabeta/a.out]
+  7,520,676  /build/gcc-4.8-mW1ufQ/gcc-4.8-4.8.4/build/x86_64-linux-gnu/libstdc++-v3/libsupc++/../../../../src/libstdc++-v3/libsupc++/new_op.cc:operator new(unsigned long) [/usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.19]
+  7,050,702  /build/eglibc-oGUzwX/eglibc-2.19/malloc/malloc.c:free [/lib/x86_64-linux-gnu/libc-2.19.so]
+  7,008,319  /usr/include/c++/4.8/bits/vector.tcc:GenerateValidMoves(State&, std::vector<Move, std::allocator<Move> >&)
+  6,566,610  /build/eglibc-oGUzwX/eglibc-2.19/string/../sysdeps/x86_64/multiarch/memcpy-ssse3-back.S:__memmove_ssse3_back [/lib/x86_64-linux-gnu/libc-2.19.so]
+  4,764,443  /usr/include/c++/4.8/bits/hashtable.h:std::_Hashtable<std::array<char, 81ul>, std::pair<std::array<char, 81ul> const, TTEntry>, std::allocator<std::pair<std::array<char, 81ul> const, TTEntry> >, std::__detail::_Select1st, std::equal_to<std::array<char, 81ul> >, BoardHasher, std::__detail::_Mod_range_hashing, std::__detail::_Default_ranged_hash, std::__detail::_Prime_rehash_policy, std::__detail::_Hashtable_traits<true, false, true> >::_M_insert_unique_node(unsigned long, unsigned long, std::__detail::_Hash_node<std::pair<std::array<char, 81ul> const, TTEntry>, true>*) [/usr/local/google/home/agnusmaximus/Desktop/UltimateTicTacToe/search/alphabeta/a.out]
+  3,923,890  /usr/include/c++/4.8/bits/hashtable_policy.h:std::__detail::_Map_base<std::array<char, 81ul>, std::pair<std::array<char, 81ul> const, TTEntry>, std::allocator<std::pair<std::array<char, 81ul> const, TTEntry> >, std::__detail::_Select1st, std::equal_to<std::array<char, 81ul> >, BoardHasher, std::__detail::_Mod_range_hashing, std::__detail::_Default_ranged_hash, std::__detail::_Prime_rehash_policy, std::__detail::_Hashtable_traits<true, false, true>, true>::operator[](std::array<char, 81ul> const&) [/usr/local/google/home/agnusmaximus/Desktop/UltimateTicTacToe/search/alphabeta/a.out]
+  3,880,183  /build/eglibc-oGUzwX/eglibc-2.19/string/../sysdeps/x86_64/multiarch/memcmp-sse4.S:__memcmp_sse4_1 [/lib/x86_64-linux-gnu/libc-2.19.so]
+  3,776,470  /usr/include/c++/4.8/bits/stl_vector.h:void std::vector<Move, std::allocator<Move> >::_M_emplace_back_aux<Move>(Move&&)
+  3,596,834  /usr/include/c++/4.8/bits/stl_algobase.h:void std::vector<Move, std::allocator<Move> >::_M_emplace_back_aux<Move>(Move&&)
+  2,797,776  /usr/include/c++/4.8/ext/new_allocator.h:GenerateValidMoves(State&, std::vector<Move, std::allocator<Move> >&)
+  1,901,300  /usr/include/c++/4.8/bits/stl_algo.h:void std::__introsort_loop<__gnu_cxx::__normal_iterator<Move*, std::vector<Move, std::allocator<Move> > >, long, MoveSort>(__gnu_cxx::__normal_iterator<Move*, std::vector<Move, std::allocator<Move> > >, __gnu_cxx::__normal_iterator<Move*, std::vector<Move, std::allocator<Move> > >, long, MoveSort) [/usr/local/google/home/agnusmaximus/Desktop/UltimateTicTacToe/search/alphabeta/a.out]
+  1,897,499  /usr/include/c++/4.8/tuple:std::__detail::_Map_base<std::array<char, 81ul>, std::pair<std::array<char, 81ul> const, TTEntry>, std::allocator<std::pair<std::array<char, 81ul> const, TTEntry> >, std::__detail::_Select1st, std::equal_to<std::array<char, 81ul> >, BoardHasher, std::__detail::_Mod_range_hashing, std::__detail::_Default_ranged_hash, std::__detail::_Prime_rehash_policy, std::__detail::_Hashtable_traits<true, false, true>, true>::operator[](std::array<char, 81ul> const&)
+  1,880,172  /build/gcc-4.8-mW1ufQ/gcc-4.8-4.8.4/build/x86_64-linux-gnu/libstdc++-v3/libsupc++/../../../../src/libstdc++-v3/libsupc++/del_op.cc:operator delete(void*) [/usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.19]
+  1,565,382  headers/utils.h:OrderMoves(State&, std::vector<Move, std::allocator<Move> >&, int) [/usr/local/google/home/agnusmaximus/Desktop/UltimateTicTacToe/search/alphabeta/a.out]
+  1,457,346  /usr/include/c++/4.8/bits/stl_algobase.h:void std::__insertion_sort<__gnu_cxx::__normal_iterator<Move*, std::vector<Move, std::allocator<Move> > >, MoveSort>(__gnu_cxx::__normal_iterator<Move*, std::vector<Move, std::allocator<Move> > >, __gnu_cxx::__normal_iterator<Move*, std::vector<Move, std::allocator<Move> > >, MoveSort)
+  1,390,054  headers/transposition_table.h:alphabeta(State&, int, int, int, Move&, int)'2
+  1,294,722  /usr/include/c++/4.8/bits/stl_algo.h:OrderMoves(State&, std::vector<Move, std::allocator<Move> >&, int)
+  1,183,844  /usr/include/c++/4.8/ext/new_allocator.h:alphabeta(State&, int, int, int, Move&, int)'2
+  1,123,872  /usr/include/c++/4.8/bits/hashtable.h:std::__detail::_Map_base<std::array<char, 81ul>, std::pair<std::array<char, 81ul> const, TTEntry>, std::allocator<std::pair<std::array<char, 81ul> const, TTEntry> >, std::__detail::_Select1st, std::equal_to<std::array<char, 81ul> >, BoardHasher, std::__detail::_Mod_range_hashing, std::__detail::_Default_ranged_hash, std::__detail::_Prime_rehash_policy, std::__detail::_Hashtable_traits<true, false, true>, true>::operator[](std::array<char, 81ul> const&)
+  1,119,870  /usr/include/c++/4.8/bits/stl_iterator.h:void std::__insertion_sort<__gnu_cxx::__normal_iterator<Move*, std::vector<Move, std::allocator<Move> > >, MoveSort>(__gnu_cxx::__normal_iterator<Move*, std::vector<Move, std::allocator<Move> > >, __gnu_cxx::__normal_iterator<Move*, std::vector<Move, std::allocator<Move> > >, MoveSort)
+  1,030,766  /usr/include/c++/4.8/bits/vector.tcc:alphabeta(State&, int, int, int, Move&, int)'2
+    924,648  /usr/include/c++/4.8/bits/stl_vector.h:alphabeta(State&, int, int, int, Move&, int)'2
+    901,476  /usr/include/c++/4.8/bits/stl_iterator.h:OrderMoves(State&, std::vector<Move, std::allocator<Move> >&, int)
+    861,019  /usr/include/c++/4.8/bits/hashtable.h:GetTranspositionTableEntry(State&, TTEntry**)
+    751,734  /usr/include/c++/4.8/bits/hashtable_policy.h:GetTranspositionTableEntry(State&, TTEntry**)
+    720,191  /build/gcc-4.8-mW1ufQ/gcc-4.8-4.8.4/build/x86_64-linux-gnu/libstdc++-v3/src/c++11/../../../../../src/libstdc++-v3/src/c++11/hashtable_c++0x.cc:std::__detail::_Prime_rehash_policy::_M_need_rehash(unsigned long, unsigned long, unsigned long) const [/usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.19]
+    528,785  /usr/include/c++/4.8/bits/hashtable_policy.h:std::_Hashtable<std::array<char, 81ul>, std::pair<std::array<char, 81ul> const, TTEntry>, std::allocator<std::pair<std::array<char, 81ul> const, TTEntry> >, std::__detail::_Select1st, std::equal_to<std::array<char, 81ul> >, BoardHasher, std::__detail::_Mod_range_hashing, std::__detail::_Default_ranged_hash, std::__detail::_Prime_rehash_policy, std::__detail::_Hashtable_traits<true, false, true> >::_M_insert_unique_node(unsigned long, unsigned long, std::__detail::_Hash_node<std::pair<std::array<char, 81ul> const, TTEntry>, true>*)
+
+--------------------------------------------------------------------------------
+-- User-annotated source: headers/transposition_table.h
+--------------------------------------------------------------------------------
+        Ir 
+
+-- line 15 ----------------------------------------
+         .    int value, depth;
+         .    short type;
+         .  };
+         .  
+         .  typedef struct TTEntry TTEntry;
+         .  
+         .  struct BoardHasher {
+         .    size_t operator() (const array<char, BOARD_DIM*BOARD_DIM> &b) const {
+   204,073      size_t hash = 0;
+33,059,826      for (int i = 0; i < BOARD_DIM*BOARD_DIM; i++) {
+16,529,913        hash *= 3;
+49,589,739        hash += b[i];
+         .      }
+         .      return hash;
+         .    }
+         .  };
+         .  
+         5  unordered_map<array<char, BOARD_DIM*BOARD_DIM>, TTEntry, BoardHasher> transposition_table;
+        66  => /build/eglibc-oGUzwX/eglibc-2.19/stdlib/cxa_atexit.c:__cxa_atexit (1x)
+         .  
+   808,578  bool GetTranspositionTableEntry(State &s, TTEntry **entry) {
+   179,684    if (transposition_table.find(s.board) != transposition_table.end()) {
+    48,822      *entry = &transposition_table[s.board];
+    24,411      return true;
+         .    }
+    65,431    return false;
+   718,736  }
+         .  
+         .  void AddTranspositionTableEntry(State &s, Move &bestmove, int alpha, int beta, int value, int depth) {
+         .    TTEntry new_entry = {bestmove, value, depth, 0};
+   179,640    if (value <= alpha) {
+    89,820      new_entry.type = UPPER_BOUND;
+         .    }
+   222,522    else if (value >= beta) {
+         .      new_entry.type = LOWER_BOUND;
+         .    }
+         .    else {
+         .      new_entry.type = EXACT_VALUE;
+         .    }
+   898,200    transposition_table[s.board] = new_entry;
+         .  }
+         .  
+         .  
+         .  #endif
+
+--------------------------------------------------------------------------------
+-- User-annotated source: alphabeta.cpp
+--------------------------------------------------------------------------------
+       Ir 
+
+-- line 5 ----------------------------------------
+        .  #include <limits.h>
+        .  #include "headers/utils.h"
+        .  #include "headers/transposition_table.h"
+        .  
+        .  using namespace std;
+        .  
+        .  static int nodes_searched = 0;
+        .  
+2,688,504  int alphabeta(State &s, int depth, int a, int b, Move &choose, int top_level) {
+  413,616    if (DidWinGame(s, Other(s.cur_player))) {
+        .      return INT_MIN;
+        .    }
+        .    if (IsFilled(s.results_board.data(), 0, 0, BOARD_DIM/3)) {
+  116,966      return 0;
+        .    }
+  620,424    if (depth <= 0) {
+        .      return 0;
+        .    }
+        .  
+   89,842    TTEntry *entry = NULL;
+  546,854    if (GetTranspositionTableEntry(s, &entry) && entry->depth >= depth) {
+    9,749  => /usr/local/google/home/agnusmaximus/Desktop/UltimateTicTacToe/search/alphabeta/headers/transposition_table.h:GetTranspositionTableEntry(State&, TTEntry**) (8x)
+       66      if (entry->type == EXACT_VALUE) {
+        .        return entry->value;
+        .      }
+       44      else if (entry->type == LOWER_BOUND) {
+       18        a = entry->value;
+        .      }
+       32      else if (entry->type == UPPER_BOUND) {
+       48        b = entry->value;
+        .      }
+       66      if (a >= b) {
+       44        return entry->value;
+        .      }
+        .    }
+   89,820    nodes_searched += 1;
+        .  
+        .    int alpha_original = a, beta_original = b;
+   89,820    int best_score = INT_MIN;
+        .    vector<Move> moves;
+        .    Move bestmove;
+  269,460    GenerateValidMoves(s, moves);
+   56,850  => /usr/local/google/home/agnusmaximus/Desktop/UltimateTicTacToe/search/alphabeta/headers/utils.h:GenerateValidMoves(State&, std::vector<Move, std::allocator<Move> >&) (8x)
+  628,740    OrderMoves(s, moves, top_level-depth);
+   67,848  => /usr/local/google/home/agnusmaximus/Desktop/UltimateTicTacToe/search/alphabeta/headers/utils.h:OrderMoves(State&, std::vector<Move, std::allocator<Move> >&, int) (8x)
+  624,572    for (auto &move : moves) {
+        .      PerformMove(s, move);
+3,317,788      int subscore = -alphabeta(s, depth-1, -b, -a, choose, false);
+516,540,202  => alphabeta.cpp:alphabeta(State&, int, int, int, Move&, int)'2 (648x)
+        .      best_score = max(best_score, subscore);
+        .      a = max(a, best_score);
+  413,600      if (best_score == subscore) {
+1,447,600        bestmove = move;
+  620,400        if (top_level == depth) {
+    4,536          choose = move;
+        .        }
+        .      }
+        .      UndoMove(s, move);
+  546,246      if (a >= b) {
+        .        AddCutoff(s, move, top_level-depth);
+        .        break;
+        .      }
+        .    }
+        .  
+        .    AddTranspositionTableEntry(s, bestmove, alpha_original, beta_original, a, depth);
+        .  
+        .    return best_score;
+1,654,464  }
+        .  
+       10  int iterative_deepening(State &s, int depth, Move &move) {
+       28    for (int i = 1; i <= depth; i++) {
+        8      nodes_searched = 0;
+        .      auto start_time = GetTimeMs();
+       56      alphabeta(s, i, INT_MIN, INT_MAX, move, i);
+516,774,907  => alphabeta.cpp:alphabeta(State&, int, int, int, Move&, int) (8x)
+        .      auto end_time = GetTimeMs();
+        .      printf("Depth %d [%d nodes %d ms]\n", i, nodes_searched, end_time-start_time);
+        .    }
+        9  }
+        .  
+        5  int main(void) {
+        .    State s;
+        .    Move bestmove;
+        2    Initialize(s);
+      719  => /usr/include/x86_64-linux-gnu/bits/string3.h:Initialize(State&) (1x)
+        4    iterative_deepening(s, DEPTH, bestmove);
+516,792,856  => alphabeta.cpp:iterative_deepening(State&, int, Move&) (1x)
+       13  }
+
+--------------------------------------------------------------------------------
+-- User-annotated source: headers/utils.h
+--------------------------------------------------------------------------------
+        Ir 
+
+-- line 42 ----------------------------------------
+         .  typedef struct State State;
+         .  
+         .  struct MoveSort {
+         .    MoveSort(State *state, int rdepth) {
+         .      this->s = state;
+         .      this->rdepth = rdepth;
+         .    }
+         .    inline bool operator() (const Move& m1, const Move& m2) {
+   689,404      return s->history[m1.x][m1.y][m1.who][rdepth] <
+18,895,786          s->history[m2.x][m2.y][m2.who][rdepth];
+         .    }
+         .    State *s;
+         .    int rdepth;
+         .  };
+         .  
+         .  int GetTimeMs() {
+         .    milliseconds ms = duration_cast< milliseconds >(
+        52        system_clock::now().time_since_epoch());
+     1,238  => /build/eglibc-oGUzwX/eglibc-2.19/elf/../sysdeps/x86_64/dl-trampoline.S:_dl_runtime_resolve (1x)
+     1,490  => /build/gcc-4.8-mW1ufQ/gcc-4.8-4.8.4/build/x86_64-linux-gnu/libstdc++-v3/src/c++11/../../../../../src/libstdc++-v3/src/c++11/chrono.cc:std::chrono::_V2::system_clock::now() (16x)
+         .    return ms.count();
+         .  }
+         .  
+         .  void PrintBoard(State &s) {
+         .    for (int i = 0; i < BOARD_DIM; i++) {
+         .      string line = "";
+         .      if (i % 3 == 0) {
+         .        for (int j = 0; j < BOARD_DIM+BOARD_DIM/3; j++ ){
+-- line 67 ----------------------------------------
+-- line 82 ----------------------------------------
+         .        else {
+         .          line += ".";
+         .        }
+         .      }
+         .      cout << line << endl;
+         .    }
+         .  }
+         .  
+         1  void Initialize(State &s) {
+         .    memset(s.results_board.data(), 0, sizeof(char) * BOARD_DIM);
+         .    memset(s.board.data(), 0, sizeof(char) * BOARD_DIM * BOARD_DIM);
+         .    memset(s.history, 0, sizeof(int) * BOARD_DIM * BOARD_DIM * 2 * DEPTH);
+         2    s.cur_player = PLAYER_1;
+         .  }
+         .  
+         .  char Other(char player) {
+ 1,861,224    if (player == PLAYER_1) return PLAYER_2;
+         .    return PLAYER_1;
+         .  }
+         .  
+         .  bool IsFilled(char *data, int x, int y, int ldim) {
+         .    for (int i = 0; i < 3; i++) {
+         .      for (int j = 0; j < 3; j++) {
+   895,888        if (data[(x+i)*ldim + (y+j)] == EMPTY) return false;
+         .      }
+         .    }
+         .    return true;
+         .  }
+         .  
+   772,828  bool DidWin(char *data, int x, int y, int ldim, char who) {
+         .    for (int i = 0; i < 3; i++) {
+ 6,983,582      if (data[x*ldim+i+y] == who &&
+   488,284          data[(x+1)*ldim+i+y] == who &&
+   389,166          data[(x+2)*ldim+i+y] == who) {
+        75        return true;
+         .      }
+ 5,203,655      if (data[(x+i)*ldim+y] == who &&
+   102,063          data[(x+i)*ldim+(y+1)] == who &&
+     3,064          data[(x+i)*ldim+(y+2)] == who) {
+         .        return true;
+         .      }
+         .    }
+    29,084    bool diag1 = data[x*ldim+y] == who &&
+ 1,809,533        data[(x+1)*ldim+(y+1)] == who &&
+       732        data[(x+2)*ldim+(y+2)];
+    37,964    bool diag2 = data[x*ldim+y+2] == who &&
+ 2,205,278        data[(x+1)*ldim+(y+1)] == who &&
+       976        data[(x+2)*ldim+y] == who;
+         .    return diag1 || diag2;
+   772,828  }
+         .  
+         .  bool DidWinSubgrid(State &s, int subgrid_x, int subgrid_y, char who) {
+ 2,615,106    return DidWin(s.board.data(), subgrid_x, subgrid_y, BOARD_DIM, who);
+ 6,491,261  => headers/utils.h:DidWin(char*, int, int, int, char) [clone .constprop.77] (179614x)
+         .  }
+         .  
+         .  bool DidWinGame(State &s, char who) {
+         .    return DidWin(s.results_board.data(), 0, 0, BOARD_DIM/3, who);
+         .  }
+         .  
+         .  void PerformMove(State &s, Move &m) {
+   620,400    int index = m.x * BOARD_DIM + m.y;
+   620,400    s.board[index] = m.who;
+ 3,874,880    if (DidWinSubgrid(s, m.x/3, m.y/3, m.who)) {
+       204      int results_index = (m.x / 3) * (BOARD_DIM / 3) + (m.y / 3);
+       204      s.results_board[results_index] = m.who;
+         .    }
+   206,800    s.moves.push_back(&m);
+   206,800    s.cur_player = Other(s.cur_player);
+         .  }
+         .  
+         .  void UndoMove(State &s, Move &m) {
+   413,600    int index = m.x * BOARD_DIM + m.y;
+   413,600    s.board[index] = EMPTY;
+ 2,481,600    int results_index = (m.x / 3) * (BOARD_DIM / 3) + (m.y / 3);
+   413,600    s.results_board[results_index] = EMPTY;
+   206,800    s.cur_player = Other(s.cur_player);
+         .    s.moves.pop_back();
+         .  }
+         .  
+         .  void AddCutoff(State &s, Move &m, int rdepth) {
+    74,154    s.history[m.x][m.y][m.who][rdepth]++;
+         .  }
+         .  
+   808,380  void OrderMoves(State &s, vector<Move> &moves, int rdepth) {
+         .    sort(moves.begin(), moves.end(), MoveSort(&s, rdepth));
+   718,560  }
+         .  
+   808,380  void GenerateValidMoves(State &s, vector<Move> &moves) {
+         .    Move *lastmove = NULL;
+   269,460    if (s.moves.size() > 0) {
+    89,812      lastmove = s.moves[s.moves.size()-1];
+         .    }
+    89,820    char current_player = s.cur_player;
+         .    int lastmove_subgrid_x = -1, lastmove_subgrid_y = -1;
+   179,624    if (lastmove != NULL) {
+   898,120      lastmove_subgrid_x = (lastmove->x % (BOARD_DIM/3))*3;
+   898,120      lastmove_subgrid_y = (lastmove->y % (BOARD_DIM/3))*3;
+         .    }
+   359,248    int can_move_anywhere = lastmove == NULL ||
+   359,208        DidWinSubgrid(s, lastmove_subgrid_x, lastmove_subgrid_y, lastmove->who) ||
+   269,432        DidWinSubgrid(s, lastmove_subgrid_x, lastmove_subgrid_y, current_player) ||
+         .        IsFilled(s.board.data(), lastmove_subgrid_x, lastmove_subgrid_y, BOARD_DIM);
+         .  
+ 3,413,160    for (int i = 0; i < BOARD_DIM; i++) {
+14,583,384      for (int j = 0; j < BOARD_DIM; j++) {
+         .        bool empty = s.board[i*BOARD_DIM+j] == EMPTY;
+21,826,260        if (empty) {
+ 5,658,660          int cur_subgrid_x = i / (BOARD_DIM/3) * 3;
+47,073,600          int cur_subgrid_y = j / (BOARD_DIM/3) * 3;
+16,683,120          bool is_in_target_subgrid = (cur_subgrid_x == lastmove_subgrid_x) && (cur_subgrid_y == lastmove_subgrid_y);
+32,320,560          if (can_move_anywhere || is_in_target_subgrid) {
+ 2,262,945            moves.push_back((Move){i, j, current_player});
+         .          }
+         .        }
+         .      }
+         .    }
+         .  
+         .    if (DEBUG) {
+         .      PrintBoard(s);
+         .      cout << "Moves:";
+         .      for (auto &move : moves) {
+         .        cout << "{" << move.x << " " << move.y << " " << (int)move.who << "} ";
+         .      }
+         .      cout << endl;
+         .    }
+   718,560  }
+         .  
+         .  #endif
+
+--------------------------------------------------------------------------------
+Ir 
+--------------------------------------------------------------------------------
+61  percentage of events annotated
+
