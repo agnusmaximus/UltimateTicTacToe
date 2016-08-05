@@ -48,10 +48,10 @@ int alphabeta(State &s, int depth, int a, int b, Move &choose, int top_level, in
     if (entry->type == EXACT_VALUE) {
       return entry->value;
     }
-    else if (entry->type == LOWER_BOUND) {
+    else if (entry->type == LOWER_BOUND && entry->value > a) {
       a = entry->value;
     }
-    else if (entry->type == UPPER_BOUND) {
+    else if (entry->type == UPPER_BOUND && entry->value < b) {
       b = entry->value;
     }
     if (a >= b) {
@@ -86,7 +86,7 @@ int alphabeta(State &s, int depth, int a, int b, Move &choose, int top_level, in
   }
 
   AddScore(s, bestmove, 1);
-  //AddTranspositionTableEntry(s, bestmove, alpha_original, beta_original, a, depth);
+  AddTranspositionTableEntry(s, bestmove, alpha_original, beta_original, a, depth);
 
   return best_score;
 }

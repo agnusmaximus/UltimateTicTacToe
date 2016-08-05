@@ -61,10 +61,10 @@ void AddTranspositionTableEntry(State &s, Move &bestmove, int alpha, int beta, i
 	TTEntry entry = {bestmove, value, depth, 0};
 	entry = {bestmove, value, depth, 0};
 	if (value <= alpha) {
-	    entry.type = UPPER_BOUND;
+	    entry.type = LOWER_BOUND;
 	}
 	else if (value >= beta) {
-	    entry.type = LOWER_BOUND;
+	    entry.type = UPPER_BOUND;
 	}
 	else {
 	    entry.type = EXACT_VALUE;
