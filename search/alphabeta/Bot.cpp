@@ -108,7 +108,12 @@ private:
             s.board[i] = char(_field[i]);
         }
         for(int i = 0; i < 9; ++i){
-            s.results_board[i] = char(_macroboard[i]);
+	    if (_macroboard[i] == -1) {
+		s.results_board[i] = 0;
+	    }
+	    else {
+		s.results_board[i] = char(_macroboard[i]);
+	    }
         }
         s.cur_player = char(_botId);
         Move bestmove;

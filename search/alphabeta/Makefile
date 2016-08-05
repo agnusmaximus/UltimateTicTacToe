@@ -1,6 +1,11 @@
 BOT=0
-DEBUG_RUN=2
+PLAY_DEBUG=2
+DEBUG_RUN=1
 
+playself:
+	rm -f playself_run
+	g++ -Ofast --std=c++11 Bot.cpp -DMETHOD=PLAY_DEBUG -o playself_run
+	./playself_run
 debug:
 	rm -f debug_run
 	g++ -Ofast --std=c++11 Bot.cpp -DMETHOD=DEBUG_RUN -o debug_run
