@@ -19,7 +19,7 @@
 #define PLAYER_2 2
 int SELF = PLAYER_1;
 
-#define DEPTH 11
+#define DEPTH 8
 int TIME_LIMIT = 500000;
 
 using namespace std;

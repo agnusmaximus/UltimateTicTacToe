@@ -22,6 +22,14 @@
  * SOFTWARE.
  ******************************************************************************/
 
+#define BOT 0
+#define DEBUG_RUN 1
+#define PLAY_DEBUG 2
+
+#ifndef METHOD
+#define METHOD BOT
+#endif
+
 #include <iostream>
 #include <algorithm>
 #include <limits.h>
@@ -213,12 +221,42 @@ private:
     std::vector<int> _field;
 };
 
+
+void DebugPlaySelf() {
+  State s;
+  Move bestmove;
+  Initialize(s);
+  string input = "";
+  for (int i = 0; i < 1000; i++) {
+      iterative_deepening(s, DEPTH, bestmove);
+      PerformMove(s, bestmove);
+      PrintBoard(s);
+      SELF = Other(SELF);
+      cin >> input;
+  }
+}
+
+void DebugRun() {
+  State s;
+  Move bestmove;
+  Initialize(s);
+  iterative_deepening(s, DEPTH, bestmove);
+}
+
 /**
  * don't change this code.
  * See BotIO::action method.
  **/
 int main() {
-    BotIO bot;
-    bot.loop();
-    return 0;
+    if (METHOD == BOT) {
+	BotIO bot;
+	bot.loop();
+	return 0;
+    }
+    if (METHOD == DEBUG_RUN) {
+	DebugRun();
+    }
+    if (METHOD == PLAY_DEBUG) {
+	DebugPlaySelf();
+    }
 }
