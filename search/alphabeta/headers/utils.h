@@ -107,6 +107,7 @@ void PrintBoard(State &s) {
 }
 
 void Initialize(State &s) {
+  srand(time(NULL));
   memset(s.results_board.data(), 0, sizeof(char) * BOARD_DIM);
   memset(s.board.data(), 0, sizeof(char) * BOARD_DIM * BOARD_DIM);
   memset(s.history, 0, sizeof(int) * BOARD_DIM * BOARD_DIM * 2);

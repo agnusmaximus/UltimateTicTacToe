@@ -2,11 +2,17 @@ BOT=0
 PLAY_DEBUG=2
 DEBUG_RUN=1
 PLAY_RANDOM=3
+PLAY_RANDOM_MANY=4
 
 playself:
 	rm -f playself_run
 	g++ -Ofast --std=c++11 Bot.cpp -DMETHOD=PLAY_DEBUG -o playself_run
 	./playself_run
+
+playrandommany:
+	rm -f playrandommany_run
+	g++ -Ofast --std=c++11 Bot.cpp -DMETHOD=PLAY_RANDOM_MANY -o playrandommany_run
+	./playrandommany_run
 playrandom:
 	rm -f playrandom_run
 	g++ -Ofast --std=c++11 Bot.cpp -DMETHOD=PLAY_RANDOM -o playrandom_run

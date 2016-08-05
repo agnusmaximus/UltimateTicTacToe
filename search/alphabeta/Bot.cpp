@@ -26,6 +26,7 @@
 #define DEBUG_RUN 1
 #define PLAY_DEBUG 2
 #define PLAY_RANDOM 3
+#define PLAY_RANDOM_MANY 4
 
 #ifndef METHOD
 #define METHOD BOT
@@ -235,22 +236,21 @@ private:
     std::vector<int> _field;
 };
 
-bool CheckEnd(State &s) {
+char CheckEnd(State &s) {
   if (DidWinGame(s, PLAYER_1)) {
     cout << "PLAYER 1 WON" << endl;
-    return true;
+    return PLAYER_1;
   }
   if (DidWinGame(s, PLAYER_2)) {
     cout << "PLAYER 2 WON" << endl;
-    return true;
+    return PLAYER_2;
   }
   if (IsFilled(s.results_board.data(), 0, 0, BOARD_DIM/3)) {
     cout << "TIE" << endl;
-    return true;
+    return TIE;
   }
-  return false;
+  return EMPTY;
 }
-
 
 void DebugPlaySelf() {
   State s;
@@ -268,7 +268,7 @@ void DebugPlaySelf() {
   }
 }
 
-void DebugPlayRandom() {
+char DebugPlayRandom() {
   State s;
   Move bestmove;
   Initialize(s);
@@ -285,10 +285,27 @@ void DebugPlayRandom() {
       PerformMove(s, valid_moves[rand()%valid_moves.size()]);
       PrintBoard(s);
       if (CheckEnd(s)) {
-        break;
+        return CheckEnd(s);
       }
       //cin >> input;
   }
+}
+
+void DebugPlayRandomMany() {
+  int p1_wins=0, p2_wins=0, tie=0;
+  for (int i = 0; i < 50; i++) {
+    int win = DebugPlayRandom();
+    if (win == PLAYER_1) {
+      p1_wins++;
+    }
+    else if (win == PLAYER_2) {
+      p2_wins++;
+    }
+    else {
+      tie++;
+    }
+  }
+  fprintf(stderr, "P1 wins: %d P2 wins: %d ties: %d\n", p1_wins, p2_wins, tie);
 }
 
 void DebugRun() {
@@ -316,5 +333,8 @@ int main() {
     }
     if (METHOD == PLAY_RANDOM) {
         DebugPlayRandom();
+    }
+    if (METHOD == PLAY_RANDOM_MANY) {
+      DebugPlayRandomMany();
     }
 }
