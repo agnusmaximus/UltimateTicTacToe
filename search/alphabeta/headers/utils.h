@@ -150,11 +150,6 @@ bool DidWin(char *data, int x, int y, int ldim, char who) {
 }
 
 bool DidWinSubgrid(State &s, int subgrid_x, int subgrid_y, char who) {
-  /*if (DidWin(s.board.data(), subgrid_x, subgrid_y, BOARD_DIM, who)) {
-    cout << "YOOOOOOOOOOO:" << (int)who << " " << subgrid_x << " " << subgrid_y << endl;
-    PrintBoard(s);
-    }*/
-
   return DidWin(s.board.data(), subgrid_x, subgrid_y, BOARD_DIM, who);
 }
 

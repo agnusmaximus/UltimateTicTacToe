@@ -86,7 +86,7 @@ int alphabeta(State &s, int depth, int a, int b, Move &choose, int top_level, in
   }
 
   AddScore(s, bestmove, 1);
-  AddTranspositionTableEntry(s, bestmove, alpha_original, beta_original, a, depth);
+  //AddTranspositionTableEntry(s, bestmove, alpha_original, beta_original, a, depth);
 
   return best_score;
 }
