@@ -56,7 +56,6 @@ bool GetTranspositionTableEntry(State &s, TTEntry **entry) {
 }
 
 void AddTranspositionTableEntry(State &s, Move &bestmove, int alpha, int beta, int value, int depth) {
-  return;
     array<char, BOARD_DIM*BOARD_DIM> bb = s.board;
     for (int i = 0; i < 4; i++) {
 	TTEntry entry = {bestmove, value, depth, 0};
