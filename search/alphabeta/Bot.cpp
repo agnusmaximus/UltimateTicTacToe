@@ -25,6 +25,7 @@
 #define BOT 0
 #define DEBUG_RUN 1
 #define PLAY_DEBUG 2
+#define PLAY_RANDOM 3
 
 #ifndef METHOD
 #define METHOD BOT
@@ -229,19 +230,56 @@ private:
     std::vector<int> _field;
 };
 
+bool CheckEnd(State &s) {
+  if (DidWinGame(s, PLAYER_1)) {
+    cout << "PLAYER 1 WON" << endl;
+    return true;
+  }
+  if (DidWinGame(s, PLAYER_2)) {
+    cout << "PLAYER 2 WON" << endl;
+    return true;
+  }
+  if (IsFilled(s.results_board.data(), 0, 0, BOARD_DIM/3)) {
+    cout << "TIE" << endl;
+    return true;
+  }
+  return false;
+}
+
 
 void DebugPlaySelf() {
   State s;
   Move bestmove;
   Initialize(s);
   string input = "";
-  for (int i = 0; i < 1000; i++) {
+  while (true) {
       iterative_deepening(s, DEPTH, bestmove);
       PerformMove(s, bestmove);
       PrintBoard(s);
-      if (DidWinGame(s, PLAYER_1) ||
-          DidWinGame(s, PLAYER_2) ||
-          IsFilled(s.results_board.data(), 0, 0, BOARD_DIM/3)) {
+      if (CheckEnd(s)) {
+        break;
+      }
+      //cin >> input;
+  }
+}
+
+void DebugPlayRandom() {
+  State s;
+  Move bestmove;
+  Initialize(s);
+  string input = "";
+  while (true) {
+      iterative_deepening(s, DEPTH, bestmove);
+      PerformMove(s, bestmove);
+      PrintBoard(s);
+      if (CheckEnd(s)) {
+        break;
+      }
+      vector<Move> valid_moves;
+      GenerateValidMoves(s, valid_moves);
+      PerformMove(s, valid_moves[rand()%valid_moves.size()]);
+      PrintBoard(s);
+      if (CheckEnd(s)) {
         break;
       }
       //cin >> input;
@@ -270,5 +308,8 @@ int main() {
     }
     if (METHOD == PLAY_DEBUG) {
 	DebugPlaySelf();
+    }
+    if (METHOD == PLAY_RANDOM) {
+        DebugPlayRandom();
     }
 }

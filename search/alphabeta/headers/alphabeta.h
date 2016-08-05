@@ -30,16 +30,17 @@ int evaluate(State &s, char player) {
 
 int alphabeta(State &s, int depth, int a, int b, Move &choose, int top_level, int start_time) {
   if (DidWinGame(s, Other(s.cur_player))) {
-    return INT_MIN;
+    return MIN_VALUE;
   }
   if (DidWinGame(s, s.cur_player)) {
-    return INT_MAX;
+    return MAX_VALUE;
   }
   if (IsFilled(s.results_board.data(), 0, 0, BOARD_DIM/3)) {
     return 0;
   }
   if (depth <= 0 || GetTimeMs()-start_time >= TIME_LIMIT) {
-    return evaluate(s, s.cur_player) - evaluate(s, Other(s.cur_player));
+    //return evaluate(s, s.cur_player) - evaluate(s, Other(s.cur_player));
+    return 0;
   }
   TTEntry *entry = nullptr;
   Move *previous_best = nullptr;
@@ -61,7 +62,7 @@ int alphabeta(State &s, int depth, int a, int b, Move &choose, int top_level, in
   nodes_searched += 1;
 
   int alpha_original = a, beta_original = b;
-  int best_score = INT_MIN;
+  int best_score = MIN_VALUE;
   vector<Move> moves;
   Move bestmove;
   GenerateValidMoves(s, moves);
@@ -71,11 +72,11 @@ int alphabeta(State &s, int depth, int a, int b, Move &choose, int top_level, in
     PerformMove(s, move);
     int subscore = -alphabeta(s, depth-1, -b, -a, choose, top_level, start_time);
     best_score = max(best_score, subscore);
-    a = max(a, best_score);
+    a = max(a, subscore);
     if (best_score == subscore) {
       bestmove = move;
       if (top_level == depth) {
-        choose = move;
+        choose = bestmove;
       }
     }
     UndoMove(s, move);
@@ -100,7 +101,7 @@ int iterative_deepening(State &s, int depth, Move &move) {
     }
     nodes_searched = 0;
     auto start_time = GetTimeMs();
-    score = alphabeta(s, i, INT_MIN, INT_MAX, move, i, start_start_time);
+    score = alphabeta(s, i, MIN_VALUE, MAX_VALUE, move, i, start_start_time);
     auto end_time = GetTimeMs();
     fprintf(stderr, "Depth %d [%d nodes, %d ms, %lf nodes per second]\n", i, nodes_searched, end_time-start_time, nodes_searched / (double)(end_time-start_time) * 1000);
   }

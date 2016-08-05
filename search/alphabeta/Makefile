@@ -1,19 +1,24 @@
 BOT=0
 PLAY_DEBUG=2
 DEBUG_RUN=1
+PLAY_RANDOM=3
 
 playself:
 	rm -f playself_run
-	g++ -Ofast --std=c++11 Bot.cpp -DMETHOD=PLAY_DEBUG -DVERBOSE=1 -o playself_run
+	g++ -Ofast --std=c++11 Bot.cpp -DMETHOD=PLAY_DEBUG -o playself_run
 	./playself_run
+playrandom:
+	rm -f playrandom_run
+	g++ -Ofast --std=c++11 Bot.cpp -DMETHOD=PLAY_RANDOM -o playrandom_run
+	./playrandom_run
 debug:
 	rm -f debug_run
-	g++ -Ofast --std=c++11 Bot.cpp -DMETHOD=DEBUG_RUN -DVERBOSE=1 -o debug_run
+	g++ -Ofast --std=c++11 Bot.cpp -DMETHOD=DEBUG_RUN -o debug_run
 	./debug_run
 profile:
 	rm -f profiling
 	rm -f callgrind.out.*
-	g++ -Ofast --std=c++11 Bot.cpp -DMETHOD=DEBUG_RUN -DVERBOSE=1 -o profiling
+	g++ -Ofast --std=c++11 Bot.cpp -DMETHOD=DEBUG_RUN -o profiling
 	valgrind --tool=callgrind ./profiling
 	callgrind_annotate callgrind.out.*
 memcheck:

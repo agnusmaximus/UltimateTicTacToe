@@ -18,7 +18,11 @@
 #define PLAYER_1 1
 #define PLAYER_2 2
 #define TIE 3
-#define DEPTH 8
+#define DEPTH 7
+
+#define MIN_VALUE (-1000000000)
+#define MAX_VALUE (1000000000)
+
 int TIME_LIMIT = 50000000;
 
 using namespace std;
@@ -155,8 +159,6 @@ bool DidWinSubgrid(State &s, int subgrid_x, int subgrid_y, char who) {
 }
 
 bool DidWinGame(State &s, char who) {
-  if (DidWin(s.results_board.data(), 0, 0, BOARD_DIM/3, who)) {
-  }
   return DidWin(s.results_board.data(), 0, 0, BOARD_DIM/3, who);
 }
 
