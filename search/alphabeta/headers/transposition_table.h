@@ -23,7 +23,7 @@ struct BoardHasher {
 	size_t hash = 0;
 	for (int i = 0; i < BOARD_DIM*BOARD_DIM; i++) {
 	    hash *= 3;
-	    hash += (size_t)b[i];
+	    hash += b[i];
 	}
 	return hash;
     }
