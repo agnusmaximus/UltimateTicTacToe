@@ -28,10 +28,13 @@
 #define PLAY_RANDOM 3
 #define PLAY_RANDOM_MANY 4
 #define RUN_TESTS 5
+#define BENCHMARK 6
 
 #ifndef METHOD
 #define METHOD BOT
 #endif
+
+#define N_BENCHMARK_RUNS 10
 
 #include <iostream>
 #include <algorithm>
@@ -318,6 +321,61 @@ void DebugRun() {
   iterative_deepening(s, DEPTH, bestmove);
 }
 
+double GetStddev(vector<int> &v){
+    double avg = 0;
+    for (const auto &val : v) {
+	avg += val;
+    }
+    avg /= v.size();
+    double total = 0;
+    for (const auto &val : v) {
+	total += (val - avg) * (val-avg);
+    }
+    total /= v.size();
+    return sqrt(total);
+}
+
+void BenchmarkAgainstRandom() {
+  int depth_sum = 0, n_counts = 0;
+  vector<int> depths;
+  int depth_hist[DEPTH+1];
+  memset(depth_hist, 0, sizeof(int) * DEPTH);
+  for (int i = 0; i < N_BENCHMARK_RUNS; i++) {
+      State s;
+      Move bestmove;
+      Initialize(s);
+      while (true) {
+	  n_counts++;
+	  int cur_depth = iterative_deepening(s, DEPTH, bestmove);
+	  depth_sum += cur_depth;
+	  depths.push_back(cur_depth);
+	  depth_hist[cur_depth]++;
+	  PerformMove(s, bestmove);
+	  PrintBoard(s);
+	  if (CheckEnd(s)) {
+	      break;
+	  }
+	  Move valid_moves[81];
+	  int n_moves = GenerateValidMoves(s, valid_moves);
+	  PerformMove(s, valid_moves[rand()%n_moves]);
+	  PrintBoard(s);
+	  if (CheckEnd(s)) {
+	      break;
+	  }
+      }
+  }
+  fprintf(stderr, "Depth histogram:\n");
+  for (int i = 1; i < DEPTH; i++) {
+      fprintf(stderr, "%d: ", i);
+      string line = "";
+      for (int k = 0; k < depth_hist[i]; k++) {
+	  line += "*";
+      }
+      fprintf(stderr, "%s\n", line.c_str());
+  }
+  fprintf(stderr, "Avg depth: %lf Std dev: %lf with %d ms\n", (double)depth_sum/(double)n_counts, GetStddev(depths), TIME_LIMIT);
+}
+
 /**
  * don't change this code.
  * See BotIO::action method.
@@ -342,5 +400,8 @@ int main() {
     }
     if (METHOD == RUN_TESTS) {
 	RunTestCases();
+    }
+    if (METHOD == BENCHMARK) {
+	BenchmarkAgainstRandom();
     }
 }

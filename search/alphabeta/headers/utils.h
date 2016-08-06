@@ -188,7 +188,7 @@ bool DidWinGame(State &s, char who) {
   return DidWin(s.results_board.data(), 0, 0, BOARD_DIM/3, who);
 }
 
-char GetBBChar(bitset<162> &b, int index) {
+char GetBBChar(const bitset<162> &b, int index) {
     char c = 0;
     c |= b[index] << 1;
     c |= b[index+1];
@@ -248,8 +248,7 @@ void AddScore(State &s, Move &m, int value) {
 }
 
 struct MoveSort {
-    MoveSort(State &state) : s(state) {
-    }
+    MoveSort(State &state) : s(state) {}
 
     bool DoesGiveFreePlacement(const Move &m) {
 	int target_x = m.x%3;
@@ -257,10 +256,15 @@ struct MoveSort {
 	return s.results_board[target_x*BOARD_DIM/3+target_y] != EMPTY;
     }
 
+    bool IsMid(const Move &m) {
+	return m.x%3==1 && m.y%3==1;
+    }
+
     bool operator() (const Move& m1, const Move& m2) {
 	if (DoesGiveFreePlacement(m1)) return false;
 	if (DoesGiveFreePlacement(m2)) return true;
-	return false;
+	if (IsMid(m1)) return true;
+	if (IsMid(m2)) return false;
 	return s.history[m1.x][m1.y][m1.who-1] >
 	    s.history[m2.x][m2.y][m2.who-1];
     }

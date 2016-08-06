@@ -37,10 +37,10 @@ int alphabeta(State &s, int depth, int a, int b, Move &choose, int top_level, in
     return 0;
   }
   if (depth <= 0 || GetTimeMs()-start_time >= TIME_LIMIT) {
-    //d=7 P1 wins: 302 P2 wins: 80 ties: 118
+      //d=7 P1 wins: 302 P2 wins: 80 ties: 118
       //return evaluate(s, s.cur_player) - evaluate(s, Other(s.cur_player));
     //d=7 P1 wins: 380 P2 wins: 63 ties: 57
-    return 0;
+      return 0;
   }
 
   TTEntry *entry = nullptr;
@@ -81,13 +81,11 @@ int alphabeta(State &s, int depth, int a, int b, Move &choose, int top_level, in
     a = max(a, subscore);
     UndoMove(s, move);
     if (best_score >= b) {
+      AddScore(s, bestmove, 1);
       break;
     }
   }
 
-  if (bestmove.who != EMPTY) {
-      AddScore(s, bestmove, best_score);
-  }
   AddTranspositionTableEntry(s, bestmove, a, b, best_score, depth);
 
   return best_score;
@@ -98,7 +96,8 @@ int iterative_deepening(State &s, int depth, Move &move) {
   int score = 0;
   auto start_start_time = GetTimeMs();
 
-  for (int i = 1; i <= depth; i++) {
+  int i;
+  for (i = 1; i <= depth; i++) {
     nodes_searched = 0;
     auto start_time = GetTimeMs();
     Move movecopy;
@@ -113,7 +112,7 @@ int iterative_deepening(State &s, int depth, Move &move) {
 
   fprintf(stderr, "Overall time %d ms, Score: %d\n", GetTimeMs()-start_start_time, score);
   fprintf(stderr, "Move: x-%d y-%d who-%d\n", move.x, move.y, (int)move.who);
-  return 0;
+  return i-1;
 }
 
 int mtdf(State &s, int depth, Move &move, int f, int start_start_time) {

@@ -4,7 +4,12 @@ DEBUG_RUN=1
 PLAY_RANDOM=3
 PLAY_RANDOM_MANY=4
 TEST=5
+BENCHMARK=6
 
+benchmark:
+	rm -f benchmark_run
+	g++ -Ofast --std=c++11 Bot.cpp -DMETHOD=BENCHMARK -DVERBOSE=1 -o benchmark_run
+	./benchmark_run
 test:
 	rm -f test_bin
 	g++ -Ofast --std=c++11 Bot.cpp -DMETHOD=RUN_TESTS -DVERBOSE=1 -o test_bin
