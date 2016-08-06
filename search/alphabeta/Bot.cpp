@@ -48,21 +48,21 @@
 #include "headers/alphabeta.h"
 
 std::vector<std::string> &split(const std::string &s, char delim, std::vector<std::string> &elems) {
-    std::stringstream ss(s);
-    std::string item;
-    elems.clear();
-    while (std::getline(ss, item, delim)) {
-        elems.push_back(item);
-    }
-    return elems;
+std::stringstream ss(s);
+std::string item;
+elems.clear();
+while (std::getline(ss, item, delim)) {
+elems.push_back(item);
+}
+return elems;
 }
 
 
 int stringToInt(const std::string &s) {
-    std::istringstream ss(s);
-    int result;
-    ss >> result;
-    return result;
+std::istringstream ss(s);
+int result;
+ss >> result;
+return result;
 }
 
 /**
@@ -77,129 +77,129 @@ class BotIO
 
 public:
 
-    /**
-     * Initialize your bot here.
-     */
-    BotIO() {
-        srand(static_cast<unsigned int>(time(0)));
-        _field.resize(81);
-        _macroboard.resize(9);
-        Initialize(s);
-        s.cur_player = (char)PLAYER_1;
-	for (int i = 0; i < 81; i++) {
-	    prev_state.push_back(0);
-	}
-    }
+/**
+ * Initialize your bot here.
+ */
+BotIO() {
+srand(static_cast<unsigned int>(time(0)));
+_field.resize(81);
+_macroboard.resize(9);
+Initialize(s);
+s.cur_player = (char)PLAYER_1;
+for (int i = 0; i < 81; i++) {
+prev_state.push_back(0);
+}
+}
 
 
-    void loop() {
-        std::string line;
-        std::vector<std::string> command;
-        command.reserve(256);
+void loop() {
+std::string line;
+std::vector<std::string> command;
+command.reserve(256);
 
-        while (std::getline(std::cin, line)) {
-            processCommand(split(line, ' ', command));
-        }
-    }
+while (std::getline(std::cin, line)) {
+processCommand(split(line, ' ', command));
+}
+}
 
 private:
-    State s;
-    vector<int> prev_state;
+State s;
+vector<int> prev_state;
 
-    /**
-     * Implement this function.
-     * type is always "move"
-     *
-     * return value must be position in x,y presentation
-     *      (use std::make_pair(x, y))
-     */
-    std::pair<int, int> action(const std::string &type, int time) {
-	Move lastmove = {-1, -1, -1};
-	for (int i = 0; i < 81; i++) {
-	    if (prev_state[i] != _field[i]) {
-		lastmove = (Move){i / 9, i % 9, s.cur_player};
-                fprintf(stderr, "Last Move: %d %d %d\n", lastmove.x, lastmove.y, lastmove.who);
-		prev_state[i] = _field[i];
-	    }
-	}
-	if (lastmove.who != -1) {
-	    PerformMove(s, lastmove);
-	}
-        fprintf(stderr, "Current State: \n");
-        PrintBoard(s);
-        Move bestmove;
-	iterative_deepening(s, DEPTH, bestmove);
-	PerformMove(s, bestmove);
-	prev_state[bestmove.x*9+bestmove.y] = _botId;
-        fprintf(stderr, "New State after move: \n");
-        PrintBoard(s);
-        return std::make_pair(bestmove.y, bestmove.x);
-    }
+/**
+ * Implement this function.
+ * type is always "move"
+ *
+ * return value must be position in x,y presentation
+ *      (use std::make_pair(x, y))
+ */
+std::pair<int, int> action(const std::string &type, int time) {
+Move lastmove = {-1, -1, -1};
+for (int i = 0; i < 81; i++) {
+if (prev_state[i] != _field[i]) {
+lastmove = (Move){i / 9, i % 9, s.cur_player};
+fprintf(stderr, "Last Move: %d %d %d\n", lastmove.x, lastmove.y, lastmove.who);
+prev_state[i] = _field[i];
+}
+}
+if (lastmove.who != -1) {
+PerformMove(s, lastmove);
+}
+fprintf(stderr, "Current State: \n");
+PrintBoard(s);
+Move bestmove;
+iterative_deepening(s, DEPTH, bestmove);
+PerformMove(s, bestmove);
+prev_state[bestmove.x*9+bestmove.y] = _botId;
+fprintf(stderr, "New State after move: \n");
+PrintBoard(s);
+return std::make_pair(bestmove.y, bestmove.x);
+}
 
-    /**
-     * Returns random free cell.
-     * It can be used to make your bot more immune to errors
-     * Use next pattern in action method:
-     *
-     *      try{
-     *          ... YOUR ALGORITHM ...
-     *      }
-     *      catch(...) {
-     *          return getRandomCell();
-     *      }
-     *
-     */
-    std::pair<int, int> getRandomFreeCell() const {
-        debug("Using random algorithm.");
-        std::vector<int> freeCells;
-        for (int i = 0; i < 81; ++i){
-            int blockId = ((i/27)*3) + (i%9)/3;
-            if (_macroboard[blockId] == -1 && _field[i] == 0){
-                freeCells.push_back(i);
-            }
-        }
-        int randomCell = freeCells[rand()%freeCells.size()];
-        return std::make_pair(randomCell%9, randomCell/9);
-    }
+/**
+ * Returns random free cell.
+ * It can be used to make your bot more immune to errors
+ * Use next pattern in action method:
+ *
+ *      try{
+ *          ... YOUR ALGORITHM ...
+ *      }
+ *      catch(...) {
+ *          return getRandomCell();
+ *      }
+ *
+ */
+std::pair<int, int> getRandomFreeCell() const {
+debug("Using random algorithm.");
+std::vector<int> freeCells;
+for (int i = 0; i < 81; ++i){
+int blockId = ((i/27)*3) + (i%9)/3;
+if (_macroboard[blockId] == -1 && _field[i] == 0){
+freeCells.push_back(i);
+}
+}
+int randomCell = freeCells[rand()%freeCells.size()];
+return std::make_pair(randomCell%9, randomCell/9);
+}
 
-    void processCommand(const std::vector<std::string> &command) {
-        if (command[0] == "action") {
-            auto point = action(command[1], stringToInt(command[2]));
-            std::cout << "place_move " << point.first << " " << point.second << std::endl << std::flush;
-        }
-        else if (command[0] == "update") {
-            update(command[1], command[2], command[3]);
-        }
-        else if (command[0] == "settings") {
-            setting(command[1], command[2]);
-        }
-        else {
-            debug("Unknown command <" + command[0] + ">.");
-        }
-    }
+void processCommand(const std::vector<std::string> &command) {
+if (command[0] == "action") {
+auto point = action(command[1], stringToInt(command[2]));
+std::cout << "place_move " << point.first << " " << point.second << std::endl << std::flush;
+}
+ else if (command[0] == "update") {
+update(command[1], command[2], command[3]);
+}
+ else if (command[0] == "settings") {
+setting(command[1], command[2]);
+}
+ else {
+debug("Unknown command <" + command[0] + ">.");
+}
+}
 
-    void update(const std::string& player, const std::string& type, const std::string& value) {
-        if (player != "game" && player != _myName) {
-            // It's not my update!
-            return;
-        }
+void update(const std::string& player, const std::string& type, const std::string& value) {
+if (player != "game" && player != _myName) {
+// It's not my update!
+return;
+}
 
-        if (type == "round") {
-            _round = stringToInt(value);
-        }
-        else if (type == "move") {
-            _move = stringToInt(value);
-        }
-        else if (type == "macroboard" || type == "field") {
-            std::vector<std::string> rawValues;
-            split(value, ',', rawValues);
-            std::vector<int>::iterator choice = (type == "field" ? _field.begin() : _macroboard.begin());
-            std::transform(rawValues.begin(), rawValues.end(), choice, stringToInt);
-        }
-        else {
-            debug("Unknown update <" + type + ">.");
-        }
-    }
+if (type == "round") {
+_round = stringToInt(value);
+}
+ else if (type == "move") {
+_move = stringToInt(value);
+}
+ else if (type == "macroboard" || type == "field") {
+std::vector<std::string> rawValues;
+split(value, ',', rawValues);
+std::vector<int>::iterator choice = (type == "field" ? _field.begin() : _macroboard.begin());
+std::transform(rawValues.begin(), rawValues.end(), choice, stringToInt);
+ }
+ else {
+     debug("Unknown update <" + type + ">.");
+ }
+}
 
     void setting(const std::string& type, const std::string& value) {
         if (type == "timebank") {
@@ -241,84 +241,90 @@ private:
     std::vector<int> _field;
 };
 
-char CheckEnd(State &s) {
-  if (DidWinGame(s, PLAYER_1)) {
-    cout << "PLAYER 1 WON" << endl;
-    return PLAYER_1;
-  }
-  if (DidWinGame(s, PLAYER_2)) {
-    cout << "PLAYER 2 WON" << endl;
-    return PLAYER_2;
-  }
-  if (IsFilled(s.results_board.data(), 0, 0, BOARD_DIM/3)) {
-    cout << "TIE" << endl;
-    return TIE;
-  }
-  return EMPTY;
+char CheckEnd(State &s, bool verbose=true) {
+    if (DidWinGame(s, PLAYER_1)) {
+	if (verbose) {
+	    cout << "PLAYER 1 WON" << endl;
+	}
+	return PLAYER_1;
+    }
+    if (DidWinGame(s, PLAYER_2)) {
+	if (verbose) {
+	    cout << "PLAYER 2 WON" << endl;
+	}
+	return PLAYER_2;
+    }
+    if (IsFilled(s.results_board.data(), 0, 0, BOARD_DIM/3)) {
+	if (verbose) {
+	    cout << "TIE" << endl;
+	}
+	return TIE;
+    }
+    return EMPTY;
 }
 
 void DebugPlaySelf() {
-  State s;
-  Move bestmove;
-  Initialize(s);
-  string input = "";
-  while (true) {
-      iterative_deepening(s, DEPTH, bestmove);
-      PerformMove(s, bestmove);
-      PrintBoard(s);
-      if (CheckEnd(s)) {
-        break;
-      }
-      //cin >> input;
-  }
+    State s;
+    Move bestmove;
+    Initialize(s);
+    string input = "";
+    while (true) {
+	iterative_deepening(s, DEPTH, bestmove);
+	PerformMove(s, bestmove);
+	PrintBoard(s);
+	if (CheckEnd(s)) {
+	    break;
+	}
+	//cin >> input;
+    }
 }
 
 char DebugPlayRandom() {
-  State s;
-  Move bestmove;
-  Initialize(s);
-  string input = "";
-  while (true) {
-      iterative_deepening(s, DEPTH, bestmove);
-      PerformMove(s, bestmove);
-      PrintBoard(s);
-      if (CheckEnd(s)) {
-	return CheckEnd(s);
-      }
-      Move valid_moves[81];
-      int n_moves = GenerateValidMoves(s, valid_moves);
-      PerformMove(s, valid_moves[rand()%n_moves]);
-      PrintBoard(s);
-      if (CheckEnd(s)) {
-        return CheckEnd(s);
-      }
-      //cin >> input;
-  }
-  return 0;
+    State s;
+    Move bestmove;
+    Initialize(s);
+    string input = "";
+    while (true) {
+	iterative_deepening(s, DEPTH, bestmove);
+	PerformMove(s, bestmove);
+	PrintBoard(s);
+	if (CheckEnd(s)) {
+	    return CheckEnd(s);
+	}
+	Move valid_moves[81];
+	int n_moves = GenerateValidMoves(s, valid_moves);
+	PerformMove(s, valid_moves[rand()%n_moves]);
+	PrintBoard(s);
+	if (CheckEnd(s)) {
+	    return CheckEnd(s);
+	}
+	//cin >> input;
+    }
+    return 0;
 }
 
 void DebugPlayRandomMany() {
-  int p1_wins=0, p2_wins=0, tie=0;
-  for (int i = 0; i < 10; i++) {
-    int win = DebugPlayRandom();
-    if (win == PLAYER_1) {
-      p1_wins++;
+    int p1_wins=0, p2_wins=0, tie=0;
+    for (int i = 0; i < 10; i++) {
+	int win = DebugPlayRandom();
+	if (win == PLAYER_1) {
+	    p1_wins++;
+	}
+	else if (win == PLAYER_2) {
+	    p2_wins++;
+	}
+	else {
+	    tie++;
+	}
     }
-    else if (win == PLAYER_2) {
-      p2_wins++;
-    }
-    else {
-      tie++;
-    }
-  }
-  fprintf(stderr, "P1 wins: %d P2 wins: %d ties: %d\n", p1_wins, p2_wins, tie);
+    fprintf(stderr, "P1 wins: %d P2 wins: %d ties: %d\n", p1_wins, p2_wins, tie);
 }
 
 void DebugRun() {
-  State s;
-  Move bestmove;
-  Initialize(s);
-  iterative_deepening(s, DEPTH, bestmove);
+    State s;
+    Move bestmove;
+    Initialize(s);
+    iterative_deepening(s, DEPTH, bestmove);
 }
 
 double GetStddev(vector<int> &v){
@@ -336,44 +342,43 @@ double GetStddev(vector<int> &v){
 }
 
 void BenchmarkAgainstRandom() {
-  int depth_sum = 0, n_counts = 0;
-  vector<int> depths;
-  int depth_hist[DEPTH+1];
-  memset(depth_hist, 0, sizeof(int) * DEPTH);
-  for (int i = 0; i < N_BENCHMARK_RUNS; i++) {
-      State s;
-      Move bestmove;
-      Initialize(s);
-      while (true) {
-	  n_counts++;
-	  int cur_depth = iterative_deepening(s, DEPTH, bestmove);
-	  depth_sum += cur_depth;
-	  depths.push_back(cur_depth);
-	  depth_hist[cur_depth]++;
-	  PerformMove(s, bestmove);
-	  PrintBoard(s);
-	  if (CheckEnd(s)) {
-	      break;
-	  }
-	  Move valid_moves[81];
-	  int n_moves = GenerateValidMoves(s, valid_moves);
-	  PerformMove(s, valid_moves[rand()%n_moves]);
-	  PrintBoard(s);
-	  if (CheckEnd(s)) {
-	      break;
-	  }
-      }
-  }
-  fprintf(stderr, "Depth histogram:\n");
-  for (int i = 1; i < DEPTH; i++) {
-      fprintf(stderr, "%d: ", i);
-      string line = "";
-      for (int k = 0; k < depth_hist[i]; k++) {
-	  line += "*";
-      }
-      fprintf(stderr, "%s\n", line.c_str());
-  }
-  fprintf(stderr, "Avg depth: %lf Std dev: %lf with %d ms\n", (double)depth_sum/(double)n_counts, GetStddev(depths), TIME_LIMIT);
+    int depth_sum = 0, n_counts = 0;
+    vector<int> depths;
+    int depth_hist[DEPTH+1];
+    memset(depth_hist, 0, sizeof(int) * DEPTH);
+    fprintf(stderr, "Running benchmark...\n");
+    for (int i = 0; i < N_BENCHMARK_RUNS; i++) {
+	State s;
+	Move bestmove;
+	Initialize(s);
+	while (true) {
+	    n_counts++;
+	    int cur_depth = iterative_deepening(s, DEPTH, bestmove, false);
+	    depth_sum += cur_depth;
+	    depths.push_back(cur_depth);
+	    depth_hist[cur_depth]++;
+	    PerformMove(s, bestmove);
+	    if (CheckEnd(s, false)) {
+		break;
+	    }
+	    Move valid_moves[81];
+	    int n_moves = GenerateValidMoves(s, valid_moves);
+	    PerformMove(s, valid_moves[rand()%n_moves]);
+	    if (CheckEnd(s, false)) {
+		break;
+	    }
+	}
+    }
+    fprintf(stderr, "Depth histogram:\n");
+    for (int i = 1; i < DEPTH; i++) {
+	fprintf(stderr, "%d: ", i);
+	string line = "";
+	for (int k = 0; k < depth_hist[i]; k++) {
+	    line += "*";
+	}
+	fprintf(stderr, "%s\n", line.c_str());
+    }
+    fprintf(stderr, "Avg depth: %lf Std dev: %lf with %d ms\n", (double)depth_sum/(double)n_counts, GetStddev(depths), TIME_LIMIT);
 }
 
 /**

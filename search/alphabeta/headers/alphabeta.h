@@ -91,7 +91,7 @@ int alphabeta(State &s, int depth, int a, int b, Move &choose, int top_level, in
   return best_score;
 }
 
-int iterative_deepening(State &s, int depth, Move &move) {
+int iterative_deepening(State &s, int depth, Move &move, bool verbose=true) {
   ResetTranspositionTable();
   int score = 0;
   auto start_start_time = GetTimeMs();
@@ -107,11 +107,15 @@ int iterative_deepening(State &s, int depth, Move &move) {
     }
     move = movecopy;
     auto end_time = GetTimeMs();
-    fprintf(stderr, "Depth %d [%d nodes, %d ms, %lf nodes per second]\n", i, nodes_searched, end_time-start_time, nodes_searched / (double)(end_time-start_time) * 1000);
+    if (verbose) {
+	fprintf(stderr, "Depth %d [%d nodes, %d ms, %lf nodes per second]\n", i, nodes_searched, end_time-start_time, nodes_searched / (double)(end_time-start_time) * 1000);
+    }
   }
 
-  fprintf(stderr, "Overall time %d ms, Score: %d\n", GetTimeMs()-start_start_time, score);
-  fprintf(stderr, "Move: x-%d y-%d who-%d\n", move.x, move.y, (int)move.who);
+  if (verbose) {
+      fprintf(stderr, "Overall time %d ms, Score: %d\n", GetTimeMs()-start_start_time, score);
+      fprintf(stderr, "Move: x-%d y-%d who-%d\n", move.x, move.y, (int)move.who);
+  }
   return i-1;
 }
 
