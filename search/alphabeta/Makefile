@@ -3,7 +3,12 @@ PLAY_DEBUG=2
 DEBUG_RUN=1
 PLAY_RANDOM=3
 PLAY_RANDOM_MANY=4
+TEST=5
 
+test:
+	rm -f test_bin
+	g++ -Ofast --std=c++11 Bot.cpp -DMETHOD=RUN_TESTS -DVERBOSE=1 -o test_bin
+	./test_bin
 playself:
 	rm -f playself_run
 	g++ -Ofast --std=c++11 Bot.cpp -DMETHOD=PLAY_DEBUG -o playself_run

@@ -18,7 +18,7 @@
 #define PLAYER_1 1
 #define PLAYER_2 2
 #define TIE 3
-#define DEPTH 12
+#define DEPTH 15
 
 #define MIN_VALUE (-10000)
 #define MAX_VALUE (10000)

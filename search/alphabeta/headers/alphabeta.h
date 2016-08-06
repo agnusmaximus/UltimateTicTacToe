@@ -28,9 +28,8 @@ int evaluate(State &s, char player) {
     return score;
 }
 
-
-
 int alphabeta(State &s, int depth, int a, int b, Move &choose, int top_level, int start_time) {
+
   if (DidWinGame(s, Other(s.cur_player))) {
       return MIN_VALUE;
   }
@@ -66,19 +65,20 @@ int alphabeta(State &s, int depth, int a, int b, Move &choose, int top_level, in
   Move moves[81];
   Move bestmove = {EMPTY,EMPTY,EMPTY};
   int n_moves_generated = GenerateValidMoves(s, moves);
+
   OrderMoves(s, moves, n_moves_generated);
   for (int i = 0; i < n_moves_generated; i++) {
     Move &move = moves[i];
     PerformMove(s, move);
     int subscore = -alphabeta(s, depth-1, -b, -a, choose, top_level, start_time);
-    best_score = max(best_score, subscore);
-    a = max(a, best_score);
-    if (best_score == subscore) {
-      bestmove = move;
-      if (top_level == depth) {
-        choose = bestmove;
-      }
+    if (subscore > best_score) {
+	best_score = subscore;
+	bestmove = move;
+	if (top_level == depth) {
+	    choose = bestmove;
+	}
     }
+    a = max(a, subscore);
     UndoMove(s, move);
     if (best_score >= b) {
       break;
@@ -97,6 +97,7 @@ int iterative_deepening(State &s, int depth, Move &move) {
   ResetTranspositionTable();
   int score = 0;
   auto start_start_time = GetTimeMs();
+
   for (int i = 1; i <= depth; i++) {
     if (GetTimeMs() - start_start_time >= TIME_LIMIT) {
        break;

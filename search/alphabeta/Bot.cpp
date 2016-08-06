@@ -27,6 +27,7 @@
 #define PLAY_DEBUG 2
 #define PLAY_RANDOM 3
 #define PLAY_RANDOM_MANY 4
+#define RUN_TESTS 5
 
 #ifndef METHOD
 #define METHOD BOT
@@ -39,6 +40,7 @@
 #include <time.h>
 #include <vector>
 
+#include "headers/testcases.h"
 #include "headers/utils.h"
 #include "headers/alphabeta.h"
 
@@ -336,6 +338,9 @@ int main() {
         DebugPlayRandom();
     }
     if (METHOD == PLAY_RANDOM_MANY) {
-      DebugPlayRandomMany();
+	DebugPlayRandomMany();
+    }
+    if (METHOD == RUN_TESTS) {
+	RunTestCases();
     }
 }
