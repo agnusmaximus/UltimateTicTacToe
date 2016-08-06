@@ -352,11 +352,15 @@ void BenchmarkAgainstRandom() {
 	Move bestmove;
 	Initialize(s);
 	while (true) {
-	    n_counts++;
 	    int cur_depth = iterative_deepening(s, DEPTH, bestmove, false);
-	    depth_sum += cur_depth;
-	    depths.push_back(cur_depth);
-	    depth_hist[cur_depth]++;
+	    // Discard those that reach max depth, since these are
+	    // endgame searches.
+	    if (cur_depth != DEPTH) {
+		n_counts++;
+		depth_sum += cur_depth;
+		depths.push_back(cur_depth);
+		depth_hist[cur_depth]++;
+	    }
 	    PerformMove(s, bestmove);
 	    if (CheckEnd(s, false)) {
 		break;
