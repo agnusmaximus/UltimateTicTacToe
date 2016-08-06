@@ -278,17 +278,18 @@ char DebugPlayRandom() {
       PerformMove(s, bestmove);
       PrintBoard(s);
       if (CheckEnd(s)) {
-        break;
+	return CheckEnd(s);
       }
-      vector<Move> valid_moves;
-      GenerateValidMoves(s, valid_moves);
-      PerformMove(s, valid_moves[rand()%valid_moves.size()]);
+      Move valid_moves[81];
+      int n_moves = GenerateValidMoves(s, valid_moves);
+      PerformMove(s, valid_moves[rand()%n_moves]);
       PrintBoard(s);
       if (CheckEnd(s)) {
         return CheckEnd(s);
       }
       //cin >> input;
   }
+  return 0;
 }
 
 void DebugPlayRandomMany() {

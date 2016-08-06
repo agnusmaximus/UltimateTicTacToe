@@ -194,14 +194,11 @@ void AddScore(State &s, Move &m, int value) {
   s.history[m.x][m.y][m.who-1] += value;
 }
 
-void OrderMoves(State &s, vector<Move> &moves, Move *previous_best) {
-  //printf("BEGIN...\n");
-  //printf("%d\n", moves.size());
-  sort(moves.begin(), moves.end(), MoveSort(&s, previous_best));
-  //printf("End...\n");
+void OrderMoves(State &s, Move moves[81], int n_moves, Move *previous_best) {
+    sort(moves, moves+n_moves, MoveSort(&s, previous_best));
 }
 
-void GenerateValidMoves(State &s, vector<Move> &moves) {
+int GenerateValidMoves(State &s, Move moves[81]) {
   Move *lastmove = NULL;
   if (s.moves.size() > 0) {
     lastmove = &s.moves[s.moves.size()-1];
@@ -217,13 +214,14 @@ void GenerateValidMoves(State &s, vector<Move> &moves) {
       DidWinSubgrid(s, lastmove_subgrid_x, lastmove_subgrid_y, current_player) ||
       IsFilled(s.board.data(), lastmove_subgrid_x, lastmove_subgrid_y, BOARD_DIM);
 
+  int n_moves = 0;
   if (can_move_anywhere) {
       for (int i = 0; i < BOARD_DIM; i++) {
 	  for (int j = 0; j < BOARD_DIM; j++) {
             int subgrid_x = i/3;
             int subgrid_y = j/3;
 	      if (s.board[i*BOARD_DIM+j] == EMPTY && s.results_board[subgrid_x*BOARD_DIM/3+subgrid_y] == EMPTY) {
-		  moves.push_back((Move){i, j, current_player});
+		  moves[n_moves++] = (Move){i, j, current_player};
 	      }
 	  }
       }
@@ -232,20 +230,13 @@ void GenerateValidMoves(State &s, vector<Move> &moves) {
       for (int i = lastmove_subgrid_x; i < lastmove_subgrid_x + 3; i++) {
 	  for (int j = lastmove_subgrid_y; j < lastmove_subgrid_y  + 3; j++) {
 	      if (s.board[i*BOARD_DIM+j] == EMPTY) {
-		  moves.push_back((Move){i, j, current_player});
+		  moves[n_moves++] = (Move){i, j, current_player};
 	      }
 	  }
       }
   }
 
-  if (DEBUG) {
-    PrintBoard(s);
-    cerr << "Moves:";
-    for (auto &move : moves) {
-      cerr << "{" << move.x << " " << move.y << " " << (int)move.who << "} ";
-    }
-    cerr << endl;
-  }
+  return n_moves;
 }
 
 #endif

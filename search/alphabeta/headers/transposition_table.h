@@ -29,7 +29,7 @@ struct BoardHasher {
     }
 };
 
-unordered_map<array<char, BOARD_DIM*BOARD_DIM>, TTEntry, BoardHasher> transposition_table(100000000);
+unordered_map<array<char, BOARD_DIM*BOARD_DIM>, TTEntry, BoardHasher> transposition_table(1000000);
 
 void ResetTranspositionTable() {
     transposition_table.clear();

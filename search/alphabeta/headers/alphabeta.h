@@ -65,11 +65,11 @@ int alphabeta(State &s, int depth, int a, int b, Move &choose, int top_level, in
 
   int alpha_original = a, beta_original = b;
   int best_score = MIN_VALUE;
-  vector<Move> moves;
+  Move moves[81];
   Move bestmove;
-  GenerateValidMoves(s, moves);
-  OrderMoves(s, moves, previous_best);
-  for (int i = 0; i < (int)moves.size(); i++) {
+  int n_moves_generated = GenerateValidMoves(s, moves);
+  OrderMoves(s, moves, n_moves_generated, previous_best);
+  for (int i = 0; i < n_moves_generated; i++) {
     Move move = moves[i];
     PerformMove(s, move);
     int subscore = -alphabeta(s, depth-1, -b, -a, choose, top_level, start_time);
