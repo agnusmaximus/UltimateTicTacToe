@@ -18,12 +18,12 @@
 #define PLAYER_1 1
 #define PLAYER_2 2
 #define TIE 3
-#define DEPTH 12
+#define DEPTH 20
 
 #define MIN_VALUE (-10000000)
 #define MAX_VALUE (10000000)
 
-int TIME_LIMIT = 50000;
+int TIME_LIMIT = 500;
 
 using namespace std;
 using namespace std::chrono;
@@ -85,6 +85,7 @@ void PrintBoard(State &s) {
     }
     cerr << line << endl;
   }
+
   for (int i = 0; i < BOARD_DIM/3; i++) {
     for (int j = 0; j < BOARD_DIM/3; j++) {
       cerr << (int)s.results_board[i*BOARD_DIM/3+j];
@@ -186,6 +187,7 @@ struct MoveSort {
     bool operator() (const Move& m1, const Move& m2) {
 	if (DoesGiveFreePlacement(m1)) return false;
 	if (DoesGiveFreePlacement(m2)) return true;
+	return false;
 	return s.history[m1.x][m1.y][m1.who-1] >
 	    s.history[m2.x][m2.y][m2.who-1];
     }

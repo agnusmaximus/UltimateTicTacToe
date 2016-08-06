@@ -99,12 +99,14 @@ int iterative_deepening(State &s, int depth, Move &move) {
   auto start_start_time = GetTimeMs();
 
   for (int i = 1; i <= depth; i++) {
-    if (GetTimeMs() - start_start_time >= TIME_LIMIT) {
-       break;
-    }
     nodes_searched = 0;
     auto start_time = GetTimeMs();
-    score = alphabeta(s, i, MIN_VALUE, MAX_VALUE, move, i, start_start_time);
+    Move movecopy;
+    score = alphabeta(s, i, MIN_VALUE, MAX_VALUE, movecopy, i, start_start_time);
+    if (GetTimeMs() - start_start_time >= TIME_LIMIT) {
+	break;
+    }
+    move = movecopy;
     auto end_time = GetTimeMs();
     fprintf(stderr, "Depth %d [%d nodes, %d ms, %lf nodes per second]\n", i, nodes_searched, end_time-start_time, nodes_searched / (double)(end_time-start_time) * 1000);
   }

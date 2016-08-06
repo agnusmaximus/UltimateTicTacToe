@@ -29,13 +29,14 @@ struct BoardHasher {
     }
 };
 
-unordered_map<array<char, BOARD_DIM*BOARD_DIM>, TTEntry, BoardHasher> transposition_table(1000000);
+unordered_map<array<char, BOARD_DIM*BOARD_DIM>, TTEntry, BoardHasher> transposition_table(100000000);
 
 void ResetTranspositionTable() {
     transposition_table.clear();
 }
 
 void TransposeBoard(array<char, BOARD_DIM*BOARD_DIM> &b) {
+
     int t;
     for (int i = 0; i < BOARD_DIM; i++) {
 	for (int j = 0; j < i; j++) {
@@ -70,11 +71,11 @@ void RotateBoard(array<char, BOARD_DIM*BOARD_DIM> &b) {
 }
 
 bool GetTranspositionTableEntry(State &s, TTEntry **entry) {
-  if (transposition_table.find(s.board) != transposition_table.end()) {
-    *entry = &transposition_table[s.board];
-    return true;
-  }
-  return false;
+    if (transposition_table.find(s.board) != transposition_table.end()) {
+	*entry = &transposition_table[s.board];
+	return true;
+    }
+    return false;
 }
 
 void AddTranspositionTableEntry(State &s, Move &bestmove, int alpha, int beta, int value, int depth) {
