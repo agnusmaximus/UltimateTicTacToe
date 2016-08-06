@@ -132,6 +132,7 @@ void PrintBoard(State &s) {
     }
     cerr << endl;
   }
+  PrintBB(s);
 }
 
 void Initialize(State &s) {
@@ -188,22 +189,20 @@ bool DidWinGame(State &s, char who) {
   return DidWin(s.results_board.data(), 0, 0, BOARD_DIM/3, who);
 }
 
+void SetBBChar(bitset<162> &b, int index, char c) {
+    b.set(index, (c & 0x2) != 0);
+    b.set(index+1, (c & 0x1) != 0);
+}
+
 void ResetBB(State &s, const Move &m) {
-    int index = m.x * BOARD_DIM + m.y * 2;
+    int index = (m.x * BOARD_DIM + m.y) * 2;
     s.bb.set(index, false);
     s.bb.set(index+1, false);
 }
 
 void SetBB(State &s, const Move &m) {
-    int index = m.x * BOARD_DIM + m.y * 2;
-    if (m.who == PLAYER_1) {
-	s.bb.set(index, false);
-	s.bb.set(index+1, true);
-    }
-    else {
-	s.bb.set(index, true);
-	s.bb.set(index+1, false);
-    }
+    int index = (m.x * BOARD_DIM + m.y) * 2;
+    SetBBChar(s.bb, index, m.who);
 }
 
 void PerformMove(State &s, const Move &m) {
