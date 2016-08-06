@@ -28,12 +28,11 @@ int evaluate(State &s, char player) {
     return score;
 }
 
+
+
 int alphabeta(State &s, int depth, int a, int b, Move &choose, int top_level, int start_time) {
   if (DidWinGame(s, Other(s.cur_player))) {
-    return MIN_VALUE;
-  }
-  if (DidWinGame(s, s.cur_player)) {
-    return MAX_VALUE;
+      return MIN_VALUE;
   }
   if (IsFilled(s.results_board.data(), 0, 0, BOARD_DIM/3)) {
     return 0;
@@ -44,8 +43,8 @@ int alphabeta(State &s, int depth, int a, int b, Move &choose, int top_level, in
     //d=7 P1 wins: 380 P2 wins: 63 ties: 57
     return 0;
   }
+
   TTEntry *entry = nullptr;
-  Move *previous_best = nullptr;
   if (GetTranspositionTableEntry(s, &entry) && entry->depth >= depth) {
     if (entry->type == EXACT_VALUE) {
       return entry->value;
@@ -59,18 +58,17 @@ int alphabeta(State &s, int depth, int a, int b, Move &choose, int top_level, in
     if (a >= b) {
       return entry->value;
     }
-    previous_best = &entry->m;
   }
   nodes_searched += 1;
 
   int alpha_original = a, beta_original = b;
   int best_score = MIN_VALUE;
   Move moves[81];
-  Move bestmove;
+  Move bestmove = {EMPTY,EMPTY,EMPTY};
   int n_moves_generated = GenerateValidMoves(s, moves);
-  OrderMoves(s, moves, n_moves_generated, previous_best);
+  OrderMoves(s, moves, n_moves_generated);
   for (int i = 0; i < n_moves_generated; i++) {
-    Move move = moves[i];
+    Move &move = moves[i];
     PerformMove(s, move);
     int subscore = -alphabeta(s, depth-1, -b, -a, choose, top_level, start_time);
     best_score = max(best_score, subscore);
@@ -87,7 +85,9 @@ int alphabeta(State &s, int depth, int a, int b, Move &choose, int top_level, in
     }
   }
 
-  AddScore(s, bestmove, best_score);
+  if (bestmove.who != EMPTY) {
+      AddScore(s, bestmove, best_score);
+  }
   AddTranspositionTableEntry(s, bestmove, a, b, best_score, depth);
 
   return best_score;

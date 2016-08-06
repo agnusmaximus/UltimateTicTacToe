@@ -20,8 +20,8 @@
 #define TIE 3
 #define DEPTH 12
 
-#define MIN_VALUE (-1000000000)
-#define MAX_VALUE (1000000000)
+#define MIN_VALUE (-10000)
+#define MAX_VALUE (10000)
 
 int TIME_LIMIT = 50000;
 
@@ -55,6 +55,11 @@ int GetTimeMs() {
       system_clock::now().time_since_epoch());
   return ms.count();
 }
+
+void PrintMove(Move &m) {
+    fprintf(stderr, "[Player: %d, x: %d, y: %d]\n", m.who, m.x, m.y);
+}
+
 void PrintBoard(State &s) {
   for (int i = 0; i < BOARD_DIM; i++) {
     string line = "";
@@ -89,29 +94,22 @@ void PrintBoard(State &s) {
 }
 
 struct MoveSort {
-  MoveSort(State *state, Move *previous) {
-    this->s = state;
-    this->m = previous;
-  }
+    MoveSort(const State &state) : s(state) {
+    }
 
-  bool DoesGiveFreePlacement(const Move &m) {
-    int target_x = m.x%3;
-    int target_y = m.y%3;
-    return s->results_board[target_x*BOARD_DIM/3+target_y] != EMPTY;
-  }
+    bool DoesGiveFreePlacement(const Move &m) {
+	int target_x = m.x%3;
+	int target_y = m.y%3;
+	return s.results_board[target_x*BOARD_DIM/3+target_y] != EMPTY;
+    }
 
-  inline bool operator() (const Move& m1, const Move& m2) {
-    if (DoesGiveFreePlacement(m1)) return false;
-    if (DoesGiveFreePlacement(m2)) return true;
-      if (this->m != nullptr) {
-	  if (MoveEquals(m1, *this->m)) return true;
-	  if (MoveEquals(m2, *this->m)) return false;
-      }
-      return s->history[m1.x][m1.y][m1.who-1] >
-	  s->history[m2.x][m2.y][m2.who-1];
-  }
-  State *s;
-  Move *m;
+    bool operator() (const Move& m1, const Move& m2) {
+	if (DoesGiveFreePlacement(m1)) return false;
+	if (DoesGiveFreePlacement(m2)) return true;
+	return s.history[m1.x][m1.y][m1.who-1] >
+	    s.history[m2.x][m2.y][m2.who-1];
+    }
+    const State &s;
 };
 
 void Initialize(State &s) {
@@ -191,14 +189,14 @@ void UndoMove(State &s, Move &m) {
 }
 
 void AddScore(State &s, Move &m, int value) {
-  s.history[m.x][m.y][m.who-1] += value;
+    s.history[m.x][m.y][m.who-1] += value;
 }
 
-void OrderMoves(State &s, Move moves[81], int n_moves, Move *previous_best) {
-    sort(moves, moves+n_moves, MoveSort(&s, previous_best));
+void OrderMoves(State &s, Move *moves, int n_moves) {
+    sort(moves, moves+n_moves, MoveSort(s));
 }
 
-int GenerateValidMoves(State &s, Move moves[81]) {
+int GenerateValidMoves(State &s, Move *moves) {
   Move *lastmove = NULL;
   if (s.moves.size() > 0) {
     lastmove = &s.moves[s.moves.size()-1];
@@ -221,7 +219,10 @@ int GenerateValidMoves(State &s, Move moves[81]) {
             int subgrid_x = i/3;
             int subgrid_y = j/3;
 	      if (s.board[i*BOARD_DIM+j] == EMPTY && s.results_board[subgrid_x*BOARD_DIM/3+subgrid_y] == EMPTY) {
-		  moves[n_moves++] = (Move){i, j, current_player};
+		  moves[n_moves].x = i;
+		  moves[n_moves].y = j;
+		  moves[n_moves].who = current_player;
+		  n_moves++;
 	      }
 	  }
       }
@@ -230,7 +231,10 @@ int GenerateValidMoves(State &s, Move moves[81]) {
       for (int i = lastmove_subgrid_x; i < lastmove_subgrid_x + 3; i++) {
 	  for (int j = lastmove_subgrid_y; j < lastmove_subgrid_y  + 3; j++) {
 	      if (s.board[i*BOARD_DIM+j] == EMPTY) {
-		  moves[n_moves++] = (Move){i, j, current_player};
+		  moves[n_moves].x = i;
+		  moves[n_moves].y = j;
+		  moves[n_moves].who = current_player;
+		  n_moves++;
 	      }
 	  }
       }

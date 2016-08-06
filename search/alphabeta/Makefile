@@ -29,7 +29,7 @@ profile:
 	callgrind_annotate callgrind.out.*
 memcheck:
 	rm -f memcheck_bin
-	g++ -Ofast --std=c++11 Bot.cpp -DMETHOD=DEBUG_RUN -DVERBOSE=1 -o memcheck_bin
+	g++ -Ofast --std=c++11 Bot.cpp -DMETHOD=PLAY_DEBUG -DVERBOSE=1 -o memcheck_bin
 	valgrind --leak-check=full --track-origins=yes ./memcheck_bin
 bot:
 	rm -f bot_bin
