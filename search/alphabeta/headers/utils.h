@@ -3,6 +3,7 @@
 
 #include <array>
 #include <algorithm>
+#include <bitset>
 #include <iostream>
 #include <string.h>
 #include <chrono>
@@ -18,12 +19,12 @@
 #define PLAYER_1 1
 #define PLAYER_2 2
 #define TIE 3
-#define DEPTH 20
+#define DEPTH 12
 
 #define MIN_VALUE (-10000000)
 #define MAX_VALUE (10000000)
 
-int TIME_LIMIT = 500;
+int TIME_LIMIT = 500000;
 
 using namespace std;
 using namespace std::chrono;
@@ -42,6 +43,7 @@ struct State {
   // Basic info.
   array<char, BOARD_DIM> results_board;
   array<char, BOARD_DIM*BOARD_DIM> board;
+  bitset<162> bb;
   vector<Move> moves;
   char cur_player;
 
@@ -58,6 +60,44 @@ int GetTimeMs() {
 
 void PrintMove(Move &m) {
     fprintf(stderr, "[Player: %d, x: %d, y: %d]\n", m.who, m.x, m.y);
+}
+
+void PrintBB(State &s) {
+    for (int i = 0; i < BOARD_DIM; i++) {
+	string line = "";
+	if (i % 3 == 0) {
+	    for (int j = 0; j < BOARD_DIM+BOARD_DIM/3; j++ ){
+		line += "-";
+	    }
+	    line += "\n";
+	}
+	for (int j = 0; j < BOARD_DIM; j++) {
+	    if (j % 3 == 0) {
+		line += "|";
+	    }
+	    bool c1 = s.bb[(i*BOARD_DIM+j)*2];
+	    bool c2 = s.bb[(i*BOARD_DIM+j)*2+1];
+	    char value = EMPTY;
+	    if (c1 == 0 && c2 == 1) {
+		value = PLAYER_1;
+	    }
+	    if (c1 == 1 && c2 == 0) {
+		value = PLAYER_2;
+	    }
+	    if (value == PLAYER_1) {
+		line += "x";
+	    }
+	    else if (value == PLAYER_2) {
+		line += "o";
+	    }
+	    else {
+		line += ".";
+	    }
+	}
+	cerr << line << endl;
+    }
+    int halt;
+    cin >> halt;
 }
 
 void PrintBoard(State &s) {
@@ -100,6 +140,8 @@ void Initialize(State &s) {
   memset(s.board.data(), 0, sizeof(char) * BOARD_DIM * BOARD_DIM);
   memset(s.history, 0, sizeof(int) * BOARD_DIM * BOARD_DIM * 2);
   s.cur_player = PLAYER_1;
+  s.bb[0] = 0;
+  s.bb[1] = 0;
 }
 
 char Other(char player) {
@@ -146,7 +188,26 @@ bool DidWinGame(State &s, char who) {
   return DidWin(s.results_board.data(), 0, 0, BOARD_DIM/3, who);
 }
 
+void ResetBB(State &s, const Move &m) {
+    int index = m.x * BOARD_DIM + m.y * 2;
+    s.bb.set(index, false);
+    s.bb.set(index+1, false);
+}
+
+void SetBB(State &s, const Move &m) {
+    int index = m.x * BOARD_DIM + m.y * 2;
+    if (m.who == PLAYER_1) {
+	s.bb.set(index, false);
+	s.bb.set(index+1, true);
+    }
+    else {
+	s.bb.set(index, true);
+	s.bb.set(index+1, false);
+    }
+}
+
 void PerformMove(State &s, const Move &m) {
+  SetBB(s, m);
   int index = m.x * BOARD_DIM + m.y;
   s.board[index] = m.who;
   if (DidWinSubgrid(s, m.x/3 * 3, m.y/3 * 3, m.who)) {
@@ -162,6 +223,7 @@ void PerformMove(State &s, const Move &m) {
 }
 
 void UndoMove(State &s, const Move &m) {
+  ResetBB(s, m);
   int index = m.x * BOARD_DIM + m.y;
   s.board[index] = EMPTY;
   int results_index = (m.x / 3) * (BOARD_DIM / 3) + (m.y / 3);
