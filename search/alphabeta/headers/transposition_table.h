@@ -32,6 +32,7 @@ bool GetTranspositionTableEntry(State &s, TTEntry **entry) {
     return false;
 }
 
+
 void AddTranspositionTableEntry(State &s, Move &bestmove, int alpha, int beta, int value, int depth) {
     bitset<162> bb = s.bb;
     TTEntry entry = {bestmove, value, depth, 0};

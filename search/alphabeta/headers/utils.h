@@ -19,12 +19,12 @@
 #define PLAYER_1 1
 #define PLAYER_2 2
 #define TIE 3
-#define DEPTH 12
+#define DEPTH 20
 
 #define MIN_VALUE (-10000000)
 #define MAX_VALUE (10000000)
 
-int TIME_LIMIT = 500000;
+int TIME_LIMIT = 500;
 
 using namespace std;
 using namespace std::chrono;
@@ -132,7 +132,6 @@ void PrintBoard(State &s) {
     }
     cerr << endl;
   }
-  PrintBB(s);
 }
 
 void Initialize(State &s) {
@@ -189,9 +188,22 @@ bool DidWinGame(State &s, char who) {
   return DidWin(s.results_board.data(), 0, 0, BOARD_DIM/3, who);
 }
 
+char GetBBChar(bitset<162> &b, int index) {
+    char c = 0;
+    c |= b[index] << 1;
+    c |= b[index+1];
+    return c;
+}
+
 void SetBBChar(bitset<162> &b, int index, char c) {
     b.set(index, (c & 0x2) != 0);
     b.set(index+1, (c & 0x1) != 0);
+}
+
+void SwapBBChar(bitset<162> &b, int i1, int i2) {
+    char t = GetBBChar(b, i1);
+    SetBBChar(b, i1, GetBBChar(b, i2));
+    SetBBChar(b, i2, t);
 }
 
 void ResetBB(State &s, const Move &m) {
