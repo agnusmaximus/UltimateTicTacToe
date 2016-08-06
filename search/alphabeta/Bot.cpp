@@ -34,7 +34,7 @@
 #define METHOD BOT
 #endif
 
-#define N_BENCHMARK_RUNS 10
+#define N_BENCHMARK_RUNS 3
 
 #include <iostream>
 #include <algorithm>
@@ -345,7 +345,7 @@ void BenchmarkAgainstRandom() {
     int depth_sum = 0, n_counts = 0;
     vector<int> depths;
     int depth_hist[DEPTH+1];
-    memset(depth_hist, 0, sizeof(int) * DEPTH);
+    memset(depth_hist, 0, sizeof(int) * (DEPTH+1));
     fprintf(stderr, "Running benchmark...\n");
     for (int i = 0; i < N_BENCHMARK_RUNS; i++) {
 	State s;
@@ -370,7 +370,7 @@ void BenchmarkAgainstRandom() {
 	}
     }
     fprintf(stderr, "Depth histogram:\n");
-    for (int i = 1; i < DEPTH; i++) {
+    for (int i = 1; i <= DEPTH; i++) {
 	fprintf(stderr, "%d: ", i);
 	string line = "";
 	for (int k = 0; k < depth_hist[i]; k++) {
@@ -378,7 +378,14 @@ void BenchmarkAgainstRandom() {
 	}
 	fprintf(stderr, "%s\n", line.c_str());
     }
-    fprintf(stderr, "Avg depth: %lf Std dev: %lf with %d ms\n", (double)depth_sum/(double)n_counts, GetStddev(depths), TIME_LIMIT);
+    int max_index = -1, max_arg = -1;
+    for (int i = 1; i <= DEPTH; i++) {
+	if (depth_hist[i] >= max_arg) {
+	    max_arg = depth_hist[i];
+	    max_index = i;
+	}
+    }
+    fprintf(stderr, "Avg depth: %lf\nStd dev: %lf\nDepth with most counts: %d\nTime Limit %d ms\n", (double)depth_sum/(double)n_counts, GetStddev(depths), max_index, TIME_LIMIT);
 }
 
 /**
