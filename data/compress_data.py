@@ -5,11 +5,7 @@ file_name = 'games.data'
 def compress_data(file_name):
 	data = json.loads(open(file_name, 'r').read())
 	compressed_data = []
-	ctr = 0
 	for game_object in data:
-		ctr += 1
-		if ctr % 100 == 0:
-			print ctr
 		game = game_object['states']
 
 		move_history = [0] * 81
