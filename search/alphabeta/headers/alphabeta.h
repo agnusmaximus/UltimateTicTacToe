@@ -38,7 +38,7 @@ int alphabeta(State &s, int depth, int a, int b, Move &choose, int top_level, in
   }
   if (depth <= 0 || GetTimeMs()-start_time >= TIME_LIMIT) {
     //d=7 P1 wins: 302 P2 wins: 80 ties: 118
-    //return evaluate(s, s.cur_player) - evaluate(s, Other(s.cur_player));
+      //return evaluate(s, s.cur_player) - evaluate(s, Other(s.cur_player));
     //d=7 P1 wins: 380 P2 wins: 63 ties: 57
     return 0;
   }
@@ -110,6 +110,49 @@ int iterative_deepening(State &s, int depth, Move &move) {
   }
 
   fprintf(stderr, "Overall time %d ms, Score: %d\n", GetTimeMs()-start_start_time, score);
+  fprintf(stderr, "Move: x-%d y-%d who-%d\n", move.x, move.y, (int)move.who);
+  return 0;
+}
+
+int mtdf(State &s, int depth, Move &move, int f, int start_start_time) {
+    int g = f;
+    int upperbound = MAX_VALUE;
+    int lowerbound = MIN_VALUE;
+    int b = 0;
+    while (lowerbound < upperbound) {
+	if (g == lowerbound)
+	    b = g+1;
+	else
+	    b = g;
+	g = alphabeta(s, depth, b-1, b, move, depth, start_start_time);
+	if (g < b)
+	    upperbound = g;
+	else
+	    lowerbound = g;
+    }
+    return g;
+}
+
+
+int iterative_deepening_mtdf(State &s, int depth, Move &move) {
+  ResetTranspositionTable();
+  vector<int> guesses;
+  guesses.push_back(0);
+  auto start_start_time = GetTimeMs();
+
+  for (int i = 1; i <= depth; i++) {
+    if (GetTimeMs() - start_start_time >= TIME_LIMIT) {
+       break;
+    }
+    nodes_searched = 0;
+    auto start_time = GetTimeMs();
+    int f = mtdf(s, i, move, guesses[max(0, i-3)], start_start_time);
+    guesses.push_back(f);
+    auto end_time = GetTimeMs();
+    fprintf(stderr, "Depth %d [%d nodes, %d ms, %lf nodes per second]\n", i, nodes_searched, end_time-start_time, nodes_searched / (double)(end_time-start_time) * 1000);
+  }
+
+  fprintf(stderr, "Overall time %d ms, Score: %d\n", GetTimeMs()-start_start_time, guesses[guesses.size()-1]);
   fprintf(stderr, "Move: x-%d y-%d who-%d\n", move.x, move.y, (int)move.who);
   return 0;
 }

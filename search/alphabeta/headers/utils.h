@@ -18,10 +18,10 @@
 #define PLAYER_1 1
 #define PLAYER_2 2
 #define TIE 3
-#define DEPTH 7
+#define DEPTH 12
 
-#define MIN_VALUE (-10000)
-#define MAX_VALUE (10000)
+#define MIN_VALUE (-10000000)
+#define MAX_VALUE (10000000)
 
 int TIME_LIMIT = 50000;
 
@@ -93,25 +93,6 @@ void PrintBoard(State &s) {
   }
 }
 
-struct MoveSort {
-    MoveSort(const State &state) : s(state) {
-    }
-
-    bool DoesGiveFreePlacement(const Move &m) {
-	int target_x = m.x%3;
-	int target_y = m.y%3;
-	return s.results_board[target_x*BOARD_DIM/3+target_y] != EMPTY;
-    }
-
-    bool operator() (const Move& m1, const Move& m2) {
-	if (DoesGiveFreePlacement(m1)) return false;
-	if (DoesGiveFreePlacement(m2)) return true;
-	return s.history[m1.x][m1.y][m1.who-1] >
-	    s.history[m2.x][m2.y][m2.who-1];
-    }
-    const State &s;
-};
-
 void Initialize(State &s) {
   srand(time(NULL));
   memset(s.results_board.data(), 0, sizeof(char) * BOARD_DIM);
@@ -164,7 +145,7 @@ bool DidWinGame(State &s, char who) {
   return DidWin(s.results_board.data(), 0, 0, BOARD_DIM/3, who);
 }
 
-void PerformMove(State &s, Move &m) {
+void PerformMove(State &s, const Move &m) {
   int index = m.x * BOARD_DIM + m.y;
   s.board[index] = m.who;
   if (DidWinSubgrid(s, m.x/3 * 3, m.y/3 * 3, m.who)) {
@@ -179,7 +160,7 @@ void PerformMove(State &s, Move &m) {
   s.cur_player = Other(s.cur_player);
 }
 
-void UndoMove(State &s, Move &m) {
+void UndoMove(State &s, const Move &m) {
   int index = m.x * BOARD_DIM + m.y;
   s.board[index] = EMPTY;
   int results_index = (m.x / 3) * (BOARD_DIM / 3) + (m.y / 3);
@@ -191,6 +172,25 @@ void UndoMove(State &s, Move &m) {
 void AddScore(State &s, Move &m, int value) {
     s.history[m.x][m.y][m.who-1] += value;
 }
+
+struct MoveSort {
+    MoveSort(State &state) : s(state) {
+    }
+
+    bool DoesGiveFreePlacement(const Move &m) {
+	int target_x = m.x%3;
+	int target_y = m.y%3;
+	return s.results_board[target_x*BOARD_DIM/3+target_y] != EMPTY;
+    }
+
+    bool operator() (const Move& m1, const Move& m2) {
+	if (DoesGiveFreePlacement(m1)) return false;
+	if (DoesGiveFreePlacement(m2)) return true;
+	return s.history[m1.x][m1.y][m1.who-1] >
+	    s.history[m2.x][m2.y][m2.who-1];
+    }
+    State &s;
+};
 
 void OrderMoves(State &s, Move *moves, int n_moves) {
     sort(moves, moves+n_moves, MoveSort(s));
