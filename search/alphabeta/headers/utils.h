@@ -19,12 +19,12 @@
 #define PLAYER_1 1
 #define PLAYER_2 2
 #define TIE 3
-#define DEPTH 9
+#define DEPTH 20
 
 #define MIN_VALUE (-10000000)
 #define MAX_VALUE (10000000)
 
-int TIME_LIMIT = 50000000;
+int TIME_LIMIT = 500;
 
 using namespace std;
 using namespace std::chrono;
@@ -54,6 +54,8 @@ struct State {
     char d1_counts[9][2];
     // d2 is the 0,2, 1,1, 2,2 diag.
     char d2_counts[9][2];
+    // num pieces in subgrid.
+    char n_pieces_in_subgrid[9];
 
     // History heuristic.
     int history[BOARD_DIM][BOARD_DIM][2];
@@ -154,6 +156,8 @@ void Initialize(State &s) {
     memset(s.col_counts, 0, sizeof(char) * 9 * 3 * 2);
     memset(s.d1_counts, 0, sizeof(char) * 9 * 1 * 2);
     memset(s.d2_counts, 0, sizeof(char) * 9 * 1 * 2);
+    memset(s.n_pieces_in_subgrid, 0, sizeof(char) * 9);
+    s.moves.reserve(DEPTH*2);
 }
 
 char Other(char player) {
@@ -229,11 +233,11 @@ void SetBB(State &s, const Move &m) {
     SetBBChar(s.bb, index, m.who);
 }
 
-bool UpdatePieceCounts(State &s, const Move &m, int c) {
-    int subgrid_index = m.x/3 * (BOARD_DIM / 3) + (m.y/3);
+inline bool UpdatePieceCounts(State &s, const Move &m, int subgrid_index, int c) {
     bool didwin = false;
     int mx = m.x%3, my = m.y%3;
     if (c > 0) {
+	s.n_pieces_in_subgrid[subgrid_index]++;
 	didwin |= ++s.row_counts[subgrid_index][mx][m.who-1] == 3;
 	didwin |= ++s.col_counts[subgrid_index][my][m.who-1] == 3;
 	if (mx == my)
@@ -242,6 +246,7 @@ bool UpdatePieceCounts(State &s, const Move &m, int c) {
 	    didwin |= ++s.d2_counts[subgrid_index][m.who-1] == 3;
     }
     else {
+	s.n_pieces_in_subgrid[subgrid_index]--;
 	didwin |= --s.row_counts[subgrid_index][mx][m.who-1];
 	didwin |= --s.col_counts[subgrid_index][my][m.who-1];
 	if (mx == my)
@@ -255,14 +260,13 @@ bool UpdatePieceCounts(State &s, const Move &m, int c) {
 void PerformMove(State &s, const Move &m) {
     SetBB(s, m);
     int index = m.x * BOARD_DIM + m.y;
+    int subgrid_index = m.x/3*BOARD_DIM/3+m.y/3;
     s.board[index] = m.who;
-    if (UpdatePieceCounts(s, m, 1)) {
-	int results_index = (m.x / 3) * (BOARD_DIM / 3) + (m.y / 3);
-	s.results_board[results_index] = m.who;
+    if (UpdatePieceCounts(s, m, subgrid_index, 1)) {
+	s.results_board[subgrid_index] = m.who;
     }
-    if (IsFilled(s.board.data(), m.x/3*3, m.y/3*3, BOARD_DIM)) {
-	int results_index = (m.x / 3) * (BOARD_DIM / 3) + (m.y / 3);
-	s.results_board[results_index] = TIE;
+    if (s.n_pieces_in_subgrid[subgrid_index]==9) {
+	s.results_board[subgrid_index] = TIE;
     }
     s.moves.push_back(m);
     s.cur_player = Other(s.cur_player);
@@ -270,10 +274,10 @@ void PerformMove(State &s, const Move &m) {
 
 void UndoMove(State &s, const Move &m) {
     ResetBB(s, m);
-    UpdatePieceCounts(s, m, -1);
     int index = m.x * BOARD_DIM + m.y;
     s.board[index] = EMPTY;
     int results_index = (m.x / 3) * (BOARD_DIM / 3) + (m.y / 3);
+    UpdatePieceCounts(s, m, results_index, -1);
     s.results_board[results_index] = EMPTY;
     s.cur_player = Other(s.cur_player);
     s.moves.pop_back();
