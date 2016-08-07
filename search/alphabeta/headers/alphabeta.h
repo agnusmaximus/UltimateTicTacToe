@@ -39,11 +39,12 @@ int alphabeta(State &s, int depth, int a, int b, Move &choose, int top_level, in
   if (depth <= 0 || GetTimeMs()-start_time >= TIME_LIMIT) {
       //d=7 P1 wins: 302 P2 wins: 80 ties: 118
       //return evaluate(s, s.cur_player) - evaluate(s, Other(s.cur_player));
-    //d=7 P1 wins: 380 P2 wins: 63 ties: 57
+      //d=7 P1 wins: 380 P2 wins: 63 ties: 57
       return 0;
   }
 
   TTEntry *entry = nullptr;
+  Move principal_move = {EMPTY, EMPTY, EMPTY};
   if (GetTranspositionTableEntry(s, &entry) && entry->depth >= depth) {
     if (entry->type == EXACT_VALUE) {
       return entry->value;
@@ -57,6 +58,7 @@ int alphabeta(State &s, int depth, int a, int b, Move &choose, int top_level, in
     if (a >= b) {
       return entry->value;
     }
+    principal_move = entry->m;
   }
   nodes_searched += 1;
 
@@ -65,8 +67,7 @@ int alphabeta(State &s, int depth, int a, int b, Move &choose, int top_level, in
   Move moves[81];
   Move bestmove = {EMPTY,EMPTY,EMPTY};
   int n_moves_generated = GenerateValidMoves(s, moves);
-
-  OrderMoves(s, moves, n_moves_generated);
+  OrderMoves(s, moves, n_moves_generated, principal_move);
   for (int i = 0; i < n_moves_generated; i++) {
     Move &move = moves[i];
     PerformMove(s, move);
@@ -81,9 +82,12 @@ int alphabeta(State &s, int depth, int a, int b, Move &choose, int top_level, in
     a = max(a, subscore);
     UndoMove(s, move);
     if (best_score >= b) {
-      AddScore(s, bestmove, 1);
       break;
     }
+  }
+
+  if (bestmove.who != EMPTY) {
+      AddScore(s, bestmove, depth);
   }
 
   AddTranspositionTableEntry(s, bestmove, a, b, best_score, depth);
@@ -94,7 +98,7 @@ int alphabeta(State &s, int depth, int a, int b, Move &choose, int top_level, in
 int iterative_deepening(State &s, int depth, Move &move, bool verbose=true) {
   ResetTranspositionTable();
   int score = 0;
-  auto start_start_time = GetTimeMs();
+  auto start_start_time = GetTimeMs();\
 
   int i;
   for (i = 1; i <= depth; i++) {

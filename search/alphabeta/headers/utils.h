@@ -11,46 +11,8 @@
 #include <map>
 #include <unordered_map>
 #include <vector>
-
-#define DEBUG 0
-
-#define BOARD_DIM 9
-#define EMPTY 0
-#define PLAYER_1 1
-#define PLAYER_2 2
-#define TIE 3
-#define DEPTH 20
-
-#define MIN_VALUE (-10000000)
-#define MAX_VALUE (10000000)
-
-int TIME_LIMIT = 500;
-
-using namespace std;
-using namespace std::chrono;
-
-struct Move {
-  int x, y;
-  char who;
-};
-typedef struct Move Move;
-
-bool MoveEquals(const Move &m1, const Move &m2) {
-    return m1.x==m2.x && m1.y==m2.y && m1.who==m2.who;
-}
-
-struct State {
-  // Basic info.
-  array<char, BOARD_DIM> results_board;
-  array<char, BOARD_DIM*BOARD_DIM> board;
-  bitset<162> bb;
-  vector<Move> moves;
-  char cur_player;
-
-  // History heuristic.
-  int history[BOARD_DIM][BOARD_DIM][2];
-};
-typedef struct State State;
+#include "defines.h"
+#include "bitboard.h"
 
 int GetTimeMs() {
   milliseconds ms = duration_cast< milliseconds >(
@@ -60,44 +22,6 @@ int GetTimeMs() {
 
 void PrintMove(Move &m) {
     fprintf(stderr, "[Player: %d, x: %d, y: %d]\n", m.who, m.x, m.y);
-}
-
-void PrintBB(State &s) {
-    for (int i = 0; i < BOARD_DIM; i++) {
-	string line = "";
-	if (i % 3 == 0) {
-	    for (int j = 0; j < BOARD_DIM+BOARD_DIM/3; j++ ){
-		line += "-";
-	    }
-	    line += "\n";
-	}
-	for (int j = 0; j < BOARD_DIM; j++) {
-	    if (j % 3 == 0) {
-		line += "|";
-	    }
-	    bool c1 = s.bb[(i*BOARD_DIM+j)*2];
-	    bool c2 = s.bb[(i*BOARD_DIM+j)*2+1];
-	    char value = EMPTY;
-	    if (c1 == 0 && c2 == 1) {
-		value = PLAYER_1;
-	    }
-	    if (c1 == 1 && c2 == 0) {
-		value = PLAYER_2;
-	    }
-	    if (value == PLAYER_1) {
-		line += "x";
-	    }
-	    else if (value == PLAYER_2) {
-		line += "o";
-	    }
-	    else {
-		line += ".";
-	    }
-	}
-	cerr << line << endl;
-    }
-    int halt;
-    cin >> halt;
 }
 
 void PrintBoard(State &s) {
@@ -132,6 +56,7 @@ void PrintBoard(State &s) {
     }
     cerr << endl;
   }
+  //PrintBitboard(s);
 }
 
 void Initialize(State &s) {
@@ -140,8 +65,7 @@ void Initialize(State &s) {
   memset(s.board.data(), 0, sizeof(char) * BOARD_DIM * BOARD_DIM);
   memset(s.history, 0, sizeof(int) * BOARD_DIM * BOARD_DIM * 2);
   s.cur_player = PLAYER_1;
-  s.bb[0] = 0;
-  s.bb[1] = 0;
+  s.bb.p1[0] = s.bb.p1[1] = s.bb.p2[0] = s.bb.p2[1] = 0;
 }
 
 char Other(char player) {
@@ -181,44 +105,15 @@ bool DidWin(char *data, int x, int y, int ldim, char who) {
 }
 
 bool DidWinSubgrid(State &s, int subgrid_x, int subgrid_y, char who) {
-  return DidWin(s.board.data(), subgrid_x, subgrid_y, BOARD_DIM, who);
+    return DidWin(s.board.data(), subgrid_x, subgrid_y, BOARD_DIM, who);
 }
 
 bool DidWinGame(State &s, char who) {
   return DidWin(s.results_board.data(), 0, 0, BOARD_DIM/3, who);
 }
 
-char GetBBChar(const bitset<162> &b, int index) {
-    char c = 0;
-    c |= b[index] << 1;
-    c |= b[index+1];
-    return c;
-}
-
-void SetBBChar(bitset<162> &b, int index, char c) {
-    b.set(index, (c & 0x2) != 0);
-    b.set(index+1, (c & 0x1) != 0);
-}
-
-void SwapBBChar(bitset<162> &b, int i1, int i2) {
-    char t = GetBBChar(b, i1);
-    SetBBChar(b, i1, GetBBChar(b, i2));
-    SetBBChar(b, i2, t);
-}
-
-void ResetBB(State &s, const Move &m) {
-    int index = (m.x * BOARD_DIM + m.y) * 2;
-    s.bb.set(index, false);
-    s.bb.set(index+1, false);
-}
-
-void SetBB(State &s, const Move &m) {
-    int index = (m.x * BOARD_DIM + m.y) * 2;
-    SetBBChar(s.bb, index, m.who);
-}
-
 void PerformMove(State &s, const Move &m) {
-  SetBB(s, m);
+  UpdateBitboard(s.bb, m);
   int index = m.x * BOARD_DIM + m.y;
   s.board[index] = m.who;
   if (DidWinSubgrid(s, m.x/3 * 3, m.y/3 * 3, m.who)) {
@@ -234,7 +129,7 @@ void PerformMove(State &s, const Move &m) {
 }
 
 void UndoMove(State &s, const Move &m) {
-  ResetBB(s, m);
+  RevertBitboard(s.bb, m);
   int index = m.x * BOARD_DIM + m.y;
   s.board[index] = EMPTY;
   int results_index = (m.x / 3) * (BOARD_DIM / 3) + (m.y / 3);
@@ -247,8 +142,12 @@ void AddScore(State &s, Move &m, int value) {
     s.history[m.x][m.y][m.who-1] += value;
 }
 
+void SetScore(State &s, Move &m, int value) {
+    s.history[m.x][m.y][m.who-1] = value;
+}
+
 struct MoveSort {
-    MoveSort(State &state) : s(state) {}
+    MoveSort(State &state, Move &principal) : s(state), m(principal) {}
 
     bool DoesGiveFreePlacement(const Move &m) {
 	int target_x = m.x%3;
@@ -259,14 +158,17 @@ struct MoveSort {
     bool operator() (const Move& m1, const Move& m2) {
 	if (DoesGiveFreePlacement(m1)) return false;
 	if (DoesGiveFreePlacement(m2)) return true;
+	if (MoveEquals(m2, m)) return false;
+	if (MoveEquals(m1, m)) return true;
 	return s.history[m1.x][m1.y][m1.who-1] >
 	s.history[m2.x][m2.y][m2.who-1];
     }
     State &s;
+    Move &m;
 };
 
-void OrderMoves(State &s, Move *moves, int n_moves) {
-    sort(moves, moves+n_moves, MoveSort(s));
+void OrderMoves(State &s, Move *moves, int n_moves, Move &m) {
+    sort(moves, moves+n_moves, MoveSort(s, m));
 }
 
 int GenerateValidMoves(State &s, Move *moves) {
