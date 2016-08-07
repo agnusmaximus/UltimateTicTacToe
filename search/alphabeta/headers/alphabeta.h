@@ -119,6 +119,7 @@ int iterative_deepening(State &s, int depth, Move &move, bool verbose=true) {
   return i-1;
 }
 
+// Seems buggy.
 int mtdf(State &s, int depth, Move &move, int f, int start_start_time) {
     int g = f;
     int upperbound = MAX_VALUE;
@@ -138,7 +139,7 @@ int mtdf(State &s, int depth, Move &move, int f, int start_start_time) {
     return g;
 }
 
-
+// Seems buggy.
 int iterative_deepening_mtdf(State &s, int depth, Move &move, bool verbose=true) {
   ResetTranspositionTable();
   vector<int> guesses;
@@ -151,8 +152,10 @@ int iterative_deepening_mtdf(State &s, int depth, Move &move, bool verbose=true)
        break;
     }
     nodes_searched = 0;
+    Move movecopy;
     auto start_time = GetTimeMs();
-    int f = mtdf(s, i, move, guesses[max(0, i-3)], start_start_time);
+    int f = mtdf(s, i, movecopy, guesses[max(0, i-1)], start_start_time);
+    move = movecopy;
     guesses.push_back(f);
     auto end_time = GetTimeMs();
     if (verbose) {

@@ -128,7 +128,7 @@ private:
 	fprintf(stderr, "Current State: \n");
 	PrintBoard(s);
 	Move bestmove;
-	iterative_deepening_mtdf(s, DEPTH, bestmove);
+	iterative_deepening(s, DEPTH, bestmove);
 	PerformMove(s, bestmove);
 	prev_state[bestmove.x*9+bestmove.y] = _botId;
 	fprintf(stderr, "New State after move: \n");
@@ -269,7 +269,7 @@ void DebugPlaySelf() {
     Initialize(s);
     string input = "";
     while (true) {
-	iterative_deepening_mtdf(s, DEPTH, bestmove);
+	iterative_deepening(s, DEPTH, bestmove);
 	PerformMove(s, bestmove);
 	PrintBoard(s);
 	if (CheckEnd(s)) {
@@ -285,7 +285,7 @@ char DebugPlayRandom() {
     Initialize(s);
     string input = "";
     while (true) {
-	iterative_deepening_mtdf(s, DEPTH, bestmove);
+	iterative_deepening(s, DEPTH, bestmove);
 	PerformMove(s, bestmove);
 	PrintBoard(s);
 	if (CheckEnd(s)) {
@@ -324,7 +324,7 @@ void DebugRun() {
     State s;
     Move bestmove;
     Initialize(s);
-    iterative_deepening_mtdf(s, DEPTH, bestmove);
+    iterative_deepening(s, DEPTH, bestmove);
 }
 
 double GetStddev(vector<int> &v){
@@ -352,7 +352,7 @@ void BenchmarkAgainstRandom() {
 	Move bestmove;
 	Initialize(s);
 	while (true) {
-	    int cur_depth = iterative_deepening_mtdf(s, DEPTH, bestmove, false);
+	    int cur_depth = iterative_deepening(s, DEPTH, bestmove, false);
 	    // Discard those that reach max depth, since these are
 	    // endgame searches.
 	    if (cur_depth != DEPTH) {
