@@ -65,8 +65,8 @@ int alphabeta(State &s, int depth, int a, int b, Move &choose, int top_level, in
   Move moves[81];
   Move bestmove = {EMPTY,EMPTY,EMPTY};
   int n_moves_generated = GenerateValidMoves(s, moves);
-
   OrderMoves(s, moves, n_moves_generated);
+
   for (int i = 0; i < n_moves_generated; i++) {
     Move &move = moves[i];
     PerformMove(s, move);
@@ -81,7 +81,7 @@ int alphabeta(State &s, int depth, int a, int b, Move &choose, int top_level, in
     a = max(a, subscore);
     UndoMove(s, move);
     if (best_score >= b) {
-      AddScore(s, bestmove, 1);
+      AddScore(s, bestmove, depth);
       break;
     }
   }
@@ -139,13 +139,14 @@ int mtdf(State &s, int depth, Move &move, int f, int start_start_time) {
 }
 
 
-int iterative_deepening_mtdf(State &s, int depth, Move &move) {
+int iterative_deepening_mtdf(State &s, int depth, Move &move, bool verbose=true) {
   ResetTranspositionTable();
   vector<int> guesses;
   guesses.push_back(0);
   auto start_start_time = GetTimeMs();
 
-  for (int i = 1; i <= depth; i++) {
+  int i;
+  for (i = 1; i <= depth; i++) {
     if (GetTimeMs() - start_start_time >= TIME_LIMIT) {
        break;
     }
@@ -154,12 +155,16 @@ int iterative_deepening_mtdf(State &s, int depth, Move &move) {
     int f = mtdf(s, i, move, guesses[max(0, i-3)], start_start_time);
     guesses.push_back(f);
     auto end_time = GetTimeMs();
-    fprintf(stderr, "Depth %d [%d nodes, %d ms, %lf nodes per second]\n", i, nodes_searched, end_time-start_time, nodes_searched / (double)(end_time-start_time) * 1000);
+    if (verbose) {
+	fprintf(stderr, "Depth %d [%d nodes, %d ms, %lf nodes per second]\n", i, nodes_searched, end_time-start_time, nodes_searched / (double)(end_time-start_time) * 1000);
+    }
   }
 
-  fprintf(stderr, "Overall time %d ms, Score: %d\n", GetTimeMs()-start_start_time, guesses[guesses.size()-1]);
-  fprintf(stderr, "Move: x-%d y-%d who-%d\n", move.x, move.y, (int)move.who);
-  return 0;
+  if (verbose) {
+      fprintf(stderr, "Overall time %d ms, Score: %d\n", GetTimeMs()-start_start_time, guesses[guesses.size()-1]);
+      fprintf(stderr, "Move: x-%d y-%d who-%d\n", move.x, move.y, (int)move.who);
+  }
+  return i-1;
 }
 
 #endif
