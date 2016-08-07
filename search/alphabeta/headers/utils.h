@@ -65,7 +65,7 @@ void Initialize(State &s) {
   memset(s.board.data(), 0, sizeof(char) * BOARD_DIM * BOARD_DIM);
   memset(s.history, 0, sizeof(int) * BOARD_DIM * BOARD_DIM * 2);
   s.cur_player = PLAYER_1;
-  s.bb.p1[0] = s.bb.p1[1] = s.bb.p2[0] = s.bb.p2[1] = 0;
+  InitializeBitboard(s.bb);
 }
 
 char Other(char player) {

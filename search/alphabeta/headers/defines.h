@@ -29,8 +29,9 @@ bool MoveEquals(const Move &m1, const Move &m2) {
 }
 
 struct Bitboard {
-    int64_t p1[2];
-    int64_t p2[2];
+    int64_t p1[8][2];
+    int64_t p2[8][2];
+    int64_t hash;
 };
 
 typedef struct Bitboard Bitboard;
@@ -39,7 +40,6 @@ struct State {
   // Basic info.
   array<char, BOARD_DIM> results_board;
   array<char, BOARD_DIM*BOARD_DIM> board;
-    //bitset<162> bb;
   Bitboard bb;
   vector<Move> moves;
   char cur_player;
