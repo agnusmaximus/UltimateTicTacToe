@@ -13,28 +13,13 @@ using namespace std;
 
 static int nodes_searched = 0;
 
-int evaluate(State &s, char player) {
-    int score = 0;
-    for (int i = 0; i < 9; i+=3) {
-	for (int j = 0; j < 9; j+=3) {
-	    if (DidWin(s.board.data(), i, j, BOARD_DIM, player)) {
-		score += 100;
-		if (i == 3 && j == 3) {
-		    score += 100;
-		}
-	    }
-	}
-    }
-    return score;
-}
-
 int alphabeta(State &s, int depth, int a, int b, Move &choose, int top_level, int start_time) {
 
-  if (DidWinGame(s, Other(s.cur_player))) {
+  if (s.did_win_overall) {
       return MIN_VALUE;
   }
-  if (IsFilled(s.results_board.data(), 0, 0, BOARD_DIM/3)) {
-    return 0;
+  if (s.n_subgrids_won == 9) {
+      return 1;
   }
   if (depth <= 0 || GetTimeMs()-start_time >= TIME_LIMIT) {
       return 0;
@@ -83,6 +68,7 @@ int alphabeta(State &s, int depth, int a, int b, Move &choose, int top_level, in
     }
   }
 
+
   AddTranspositionTableEntry(s, bestmove, a, b, best_score, depth);
 
   return best_score;
@@ -93,6 +79,7 @@ int iterative_deepening(State &s, int depth, Move &move, bool verbose=true) {
   int score = 0;
   auto start_start_time = GetTimeMs();
 
+  int will_win = false;
   int i;
   for (i = 1; i <= depth; i++) {
     nodes_searched = 0;

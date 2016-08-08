@@ -19,12 +19,12 @@
 #define PLAYER_1 1
 #define PLAYER_2 2
 #define TIE 3
-#define DEPTH 20
+#define DEPTH 12
 
 #define MIN_VALUE (-10000000)
 #define MAX_VALUE (10000000)
 
-int TIME_LIMIT = 500;
+int TIME_LIMIT = 10000;
 
 using namespace std;
 using namespace std::chrono;
@@ -57,10 +57,40 @@ struct State {
     // num pieces in subgrid.
     char n_pieces_in_subgrid[9];
 
+    // Determining overall wins.
+    char n_subgrids_won;
+    char overall_row_counts[3][2];
+    char overall_col_counts[3][2];
+    char overall_d1_counts[2];
+    char overall_d2_counts[2];
+    bool did_win_overall;
+
     // History heuristic.
     int history[BOARD_DIM][BOARD_DIM][2];
 };
 typedef struct State State;
+
+void Initialize(State &s) {
+    srand(time(NULL));
+    memset(s.results_board.data(), 0, sizeof(char) * BOARD_DIM);
+    memset(s.board.data(), 0, sizeof(char) * BOARD_DIM * BOARD_DIM);
+    memset(s.history, 0, sizeof(int) * BOARD_DIM * BOARD_DIM * 2);
+    s.cur_player = PLAYER_1;
+    s.bb[0] = 0;
+    s.bb[1] = 0;
+    memset(s.row_counts, 0, sizeof(char) * 9 * 3 * 2);
+    memset(s.col_counts, 0, sizeof(char) * 9 * 3 * 2);
+    memset(s.d1_counts, 0, sizeof(char) * 9 * 1 * 2);
+    memset(s.d2_counts, 0, sizeof(char) * 9 * 1 * 2);
+    memset(s.n_pieces_in_subgrid, 0, sizeof(char) * 9);
+    s.moves.reserve(DEPTH*2);
+    s.n_subgrids_won = 0;
+    memset(s.overall_row_counts, 0, sizeof(char) * 3 * 2);
+    memset(s.overall_col_counts, 0, sizeof(char) * 3 * 2);
+    memset(s.overall_d1_counts, 0, sizeof(char) * 2);
+    memset(s.overall_d2_counts, 0, sizeof(char) * 2);
+    s.did_win_overall = false;
+}
 
 int GetTimeMs() {
     milliseconds ms = duration_cast< milliseconds >(
@@ -144,22 +174,6 @@ void PrintBoard(State &s) {
     }
 }
 
-void Initialize(State &s) {
-    srand(time(NULL));
-    memset(s.results_board.data(), 0, sizeof(char) * BOARD_DIM);
-    memset(s.board.data(), 0, sizeof(char) * BOARD_DIM * BOARD_DIM);
-    memset(s.history, 0, sizeof(int) * BOARD_DIM * BOARD_DIM * 2);
-    s.cur_player = PLAYER_1;
-    s.bb[0] = 0;
-    s.bb[1] = 0;
-    memset(s.row_counts, 0, sizeof(char) * 9 * 3 * 2);
-    memset(s.col_counts, 0, sizeof(char) * 9 * 3 * 2);
-    memset(s.d1_counts, 0, sizeof(char) * 9 * 1 * 2);
-    memset(s.d2_counts, 0, sizeof(char) * 9 * 1 * 2);
-    memset(s.n_pieces_in_subgrid, 0, sizeof(char) * 9);
-    s.moves.reserve(DEPTH*2);
-}
-
 char Other(char player) {
     if (player == PLAYER_1) return PLAYER_2;
     return PLAYER_1;
@@ -233,6 +247,29 @@ void SetBB(State &s, const Move &m) {
     SetBBChar(s.bb, index, m.who);
 }
 
+inline bool UpdateOverallPieceCounts(State &s, const Move &m, int subgrid_index, int c) {
+    bool didwin = false;
+    int i1 = subgrid_index/3, i2 = subgrid_index%3;
+    if (c > 0) {
+	didwin |= ++s.overall_row_counts[i1][m.who-1] == 3;
+	didwin |= ++s.overall_col_counts[i2][m.who-1] == 3;
+	if (i1 == i2)
+	    didwin |= ++s.overall_d1_counts[m.who-1] == 3;
+	if (i1 == 2-i2)
+	    didwin |= ++s.overall_d2_counts[m.who-1] == 3;
+
+    }
+    else {
+	--s.overall_row_counts[i1][m.who-1];
+	--s.overall_col_counts[i2][m.who-1];
+	if (i1 == i2)
+	    --s.overall_d1_counts[m.who-1];
+	if (i1 == 2-i2)
+	    --s.overall_d2_counts[m.who-1];
+    }
+    return didwin;
+}
+
 inline bool UpdatePieceCounts(State &s, const Move &m, int subgrid_index, int c) {
     bool didwin = false;
     int mx = m.x%3, my = m.y%3;
@@ -264,9 +301,14 @@ void PerformMove(State &s, const Move &m) {
     s.board[index] = m.who;
     if (UpdatePieceCounts(s, m, subgrid_index, 1)) {
 	s.results_board[subgrid_index] = m.who;
+	s.n_subgrids_won++;
+	if (UpdateOverallPieceCounts(s, m, subgrid_index, 1)) {
+	    s.did_win_overall = true;
+	}
     }
-    if (s.n_pieces_in_subgrid[subgrid_index]==9) {
+    else if (s.n_pieces_in_subgrid[subgrid_index]==9) {
 	s.results_board[subgrid_index] = TIE;
+	s.n_subgrids_won++;
     }
     s.moves.push_back(m);
     s.cur_player = Other(s.cur_player);
@@ -277,10 +319,17 @@ void UndoMove(State &s, const Move &m) {
     int index = m.x * BOARD_DIM + m.y;
     s.board[index] = EMPTY;
     int results_index = (m.x / 3) * (BOARD_DIM / 3) + (m.y / 3);
+    if (s.results_board[results_index] != EMPTY) {
+	s.n_subgrids_won--;
+	if (s.results_board[results_index] == m.who) {
+	    UpdateOverallPieceCounts(s, m, results_index, -1);
+	}
+    }
     UpdatePieceCounts(s, m, results_index, -1);
     s.results_board[results_index] = EMPTY;
     s.cur_player = Other(s.cur_player);
     s.moves.pop_back();
+    s.did_win_overall = false;
 }
 
 void AddScore(State &s, Move &m, int value) {

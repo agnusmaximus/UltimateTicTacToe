@@ -34,7 +34,7 @@
 #define METHOD BOT
 #endif
 
-#define N_BENCHMARK_RUNS 10
+#define N_BENCHMARK_RUNS 1
 
 #include <iostream>
 #include <algorithm>
@@ -305,7 +305,7 @@ char DebugPlayRandom() {
 
 void DebugPlayRandomMany() {
     int p1_wins=0, p2_wins=0, tie=0;
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < N_BENCHMARK_RUNS; i++) {
 	int win = DebugPlayRandom();
 	if (win == PLAYER_1) {
 	    p1_wins++;
