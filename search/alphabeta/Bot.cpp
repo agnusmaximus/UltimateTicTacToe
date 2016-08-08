@@ -271,7 +271,7 @@ void DebugPlaySelf() {
     while (true) {
 	iterative_deepening(s, DEPTH, bestmove);
 	PerformMove(s, bestmove);
-	PrintBoard(s);
+	//PrintBoard(s);
 	if (CheckEnd(s)) {
 	    break;
 	}

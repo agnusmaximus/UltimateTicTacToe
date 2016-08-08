@@ -18,7 +18,7 @@ struct TTEntry {
 
 typedef struct TTEntry TTEntry;
 
-unordered_map<bitset<162>, TTEntry> transposition_table(10000000);
+unordered_map<bitset<162>, TTEntry> transposition_table(4000000);
 
 void ResetTranspositionTable() {
     transposition_table.clear();

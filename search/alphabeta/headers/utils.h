@@ -19,7 +19,7 @@
 #define PLAYER_1 1
 #define PLAYER_2 2
 #define TIE 3
-#define DEPTH 20
+#define DEPTH 10
 
 #define MIN_VALUE (-10000000)
 #define MAX_VALUE (10000000)
@@ -327,12 +327,10 @@ void UndoMove(State &s, const Move &m) {
 
 void AddScore(State &s, Move &m, int value) {
     s.history[m.x][m.y][m.who-1] += value;
-    //s.history[m.x][m.y][0] += value;
-    //s.history[m.x][m.y][1] += value;
 }
 
 struct MoveSort {
-MoveSort(State &state) : s(state) {}
+MoveSort(const State &state) : s(state) {}
 
     bool DoesGiveFreePlacement(const Move &m) {
 	int target_x = m.x%3;
@@ -357,8 +355,9 @@ MoveSort(State &state) : s(state) {}
 	}
 	if (r1score > r2score) return true;
 	if (r1score <= r2score) return false;
+	return false;
     }
-    State &s;
+    const State &s;
 };
 
 void OrderMoves(State &s, Move *moves, int n_moves) {
