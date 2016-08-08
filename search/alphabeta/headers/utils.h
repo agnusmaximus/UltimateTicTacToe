@@ -67,6 +67,9 @@ struct State {
 
     // History heuristic.
     int history[BOARD_DIM][BOARD_DIM][2];
+
+    // Score track
+    int score[2];
 };
 typedef struct State State;
 
@@ -90,6 +93,7 @@ void Initialize(State &s) {
     memset(s.overall_d1_counts, 0, sizeof(char) * 2);
     memset(s.overall_d2_counts, 0, sizeof(char) * 2);
     s.did_win_overall = false;
+    memset(s.score, 0, sizeof(int) * 2);
 }
 
 int GetTimeMs() {
@@ -289,6 +293,7 @@ void PerformMove(State &s, const Move &m) {
     if (UpdatePieceCounts(s, m, subgrid_index, 1)) {
 	s.results_board[subgrid_index] = m.who;
 	s.n_subgrids_won++;
+	s.score[m.who-1]++;
 	if (UpdateOverallPieceCounts(s, m, subgrid_index, 1)) {
 	    s.did_win_overall = true;
 	}
@@ -309,6 +314,7 @@ void UndoMove(State &s, const Move &m) {
     if (s.results_board[results_index] != EMPTY) {
 	s.n_subgrids_won--;
 	if (s.results_board[results_index] == m.who) {
+	    s.score[m.who-1]--;
 	    UpdateOverallPieceCounts(s, m, results_index, -1);
 	}
     }
@@ -334,11 +340,23 @@ MoveSort(State &state) : s(state) {}
 	return s.results_board[target_x*BOARD_DIM/3+target_y] != EMPTY;
     }
 
+    bool RestrictScore(const Move &m) {
+	int target_x = m.x%3;
+	int target_y = m.y%3;
+	return s.n_pieces_in_subgrid[target_x*BOARD_DIM+target_y];
+    }
+
     bool operator() (const Move& m1, const Move& m2) {
 	if (DoesGiveFreePlacement(m1)) return false;
 	if (DoesGiveFreePlacement(m2)) return true;
-	return s.history[m1.x][m1.y][m1.who-1] >
-	    s.history[m2.x][m2.y][m2.who-1];
+	int r1score = RestrictScore(m1);
+	int r2score = RestrictScore(m2);
+	if (r1score < 6 && r2score < 6) {
+	    return s.history[m1.x][m1.y][m1.who-1] >
+		s.history[m2.x][m2.y][m2.who-1];
+	}
+	if (r1score > r2score) return true;
+	if (r1score <= r2score) return false;
     }
     State &s;
 };

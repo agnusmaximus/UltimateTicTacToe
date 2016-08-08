@@ -14,17 +14,21 @@ using namespace std;
 static int nodes_searched = 0;
 static int n_leaf_nodes = 0;
 
-int alphabeta(State &s, int depth, int a, int b, Move &choose, int top_level, int start_time) {
+int evaluate(State &s) {
+    return s.score[s.cur_player-1] - s.score[Other(s.cur_player)-1];
+}
 
+int alphabeta(State &s, int depth, int a, int b, Move &choose, int top_level, int start_time) {
   if (s.did_win_overall) {
-      return MIN_VALUE;
+      return MIN_VALUE / (top_level-depth+1);
   }
   if (s.n_subgrids_won == 9) {
-      return MAX_VALUE-1;
+      return 0;
   }
   if (depth <= 0 || GetTimeMs()-start_time >= TIME_LIMIT) {
       n_leaf_nodes++;
-      return 0;
+      //return 0;
+      return evaluate(s);
   }
 
   TTEntry *entry = nullptr;
@@ -65,14 +69,13 @@ int alphabeta(State &s, int depth, int a, int b, Move &choose, int top_level, in
     a = max(a, subscore);
     UndoMove(s, move);
     if (best_score >= b) {
-      AddScore(s, bestmove, depth);
       break;
     }
-    if (best_score >= MAX_VALUE)
-	break;
   }
 
-
+  if (bestmove.who != EMPTY) {
+      AddScore(s, bestmove, depth);
+  }
   AddTranspositionTableEntry(s, bestmove, a, b, best_score, depth);
 
   return best_score;
