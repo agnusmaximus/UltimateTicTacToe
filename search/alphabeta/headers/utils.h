@@ -19,12 +19,12 @@
 #define PLAYER_1 1
 #define PLAYER_2 2
 #define TIE 3
-#define DEPTH 12
+#define DEPTH 20
 
 #define MIN_VALUE (-10000000)
 #define MAX_VALUE (10000000)
 
-int TIME_LIMIT = 10000;
+int TIME_LIMIT = 500;
 
 using namespace std;
 using namespace std::chrono;
@@ -43,7 +43,7 @@ struct State {
     // Basic info.
     array<char, BOARD_DIM> results_board;
     array<char, BOARD_DIM*BOARD_DIM> board;
-    bitset<162> bb;
+    bitset<162> bb, bb2, bb3, bb4;
     vector<Move> moves;
     char cur_player;
 
@@ -230,18 +230,6 @@ void SetBBChar(bitset<162> &b, int index, char c) {
     b.set(index+1, (c & 0x1) != 0);
 }
 
-void SwapBBChar(bitset<162> &b, int i1, int i2) {
-    char t = GetBBChar(b, i1);
-    SetBBChar(b, i1, GetBBChar(b, i2));
-    SetBBChar(b, i2, t);
-}
-
-void ResetBB(State &s, const Move &m) {
-    int index = (m.x * BOARD_DIM + m.y) * 2;
-    s.bb.set(index, false);
-    s.bb.set(index+1, false);
-}
-
 void SetBB(State &s, const Move &m) {
     int index = (m.x * BOARD_DIM + m.y) * 2;
     SetBBChar(s.bb, index, m.who);
@@ -257,7 +245,6 @@ inline bool UpdateOverallPieceCounts(State &s, const Move &m, int subgrid_index,
 	    didwin |= ++s.overall_d1_counts[m.who-1] == 3;
 	if (i1 == 2-i2)
 	    didwin |= ++s.overall_d2_counts[m.who-1] == 3;
-
     }
     else {
 	--s.overall_row_counts[i1][m.who-1];
@@ -315,7 +302,7 @@ void PerformMove(State &s, const Move &m) {
 }
 
 void UndoMove(State &s, const Move &m) {
-    ResetBB(s, m);
+    SetBB(s, {m.x, m.y, EMPTY});
     int index = m.x * BOARD_DIM + m.y;
     s.board[index] = EMPTY;
     int results_index = (m.x / 3) * (BOARD_DIM / 3) + (m.y / 3);
@@ -334,6 +321,8 @@ void UndoMove(State &s, const Move &m) {
 
 void AddScore(State &s, Move &m, int value) {
     s.history[m.x][m.y][m.who-1] += value;
+    //s.history[m.x][m.y][0] += value;
+    //s.history[m.x][m.y][1] += value;
 }
 
 struct MoveSort {

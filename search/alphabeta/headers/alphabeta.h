@@ -12,6 +12,7 @@
 using namespace std;
 
 static int nodes_searched = 0;
+static int n_leaf_nodes = 0;
 
 int alphabeta(State &s, int depth, int a, int b, Move &choose, int top_level, int start_time) {
 
@@ -19,9 +20,10 @@ int alphabeta(State &s, int depth, int a, int b, Move &choose, int top_level, in
       return MIN_VALUE;
   }
   if (s.n_subgrids_won == 9) {
-      return 1;
+      return MAX_VALUE-1;
   }
   if (depth <= 0 || GetTimeMs()-start_time >= TIME_LIMIT) {
+      n_leaf_nodes++;
       return 0;
   }
 
@@ -66,6 +68,8 @@ int alphabeta(State &s, int depth, int a, int b, Move &choose, int top_level, in
       AddScore(s, bestmove, depth);
       break;
     }
+    if (best_score >= MAX_VALUE)
+	break;
   }
 
 
@@ -82,14 +86,19 @@ int iterative_deepening(State &s, int depth, Move &move, bool verbose=true) {
   int will_win = false;
   int i;
   for (i = 1; i <= depth; i++) {
+      n_leaf_nodes = 0;
     nodes_searched = 0;
     auto start_time = GetTimeMs();
     Move movecopy;
     score = alphabeta(s, i, MIN_VALUE, MAX_VALUE, movecopy, i, start_start_time);
+    move = movecopy;
+    if (score >= MAX_VALUE) {
+	i = DEPTH+1;
+	break;
+    }
     if (GetTimeMs() - start_start_time >= TIME_LIMIT) {
 	break;
     }
-    move = movecopy;
     auto end_time = GetTimeMs();
     if (verbose) {
 	fprintf(stderr, "Depth %d [%d nodes, %d ms, %lf nodes per second]\n", i, nodes_searched, end_time-start_time, nodes_searched / (double)(end_time-start_time) * 1000);
@@ -99,6 +108,7 @@ int iterative_deepening(State &s, int depth, Move &move, bool verbose=true) {
   if (verbose) {
       fprintf(stderr, "Overall time %d ms, Score: %d\n", GetTimeMs()-start_start_time, score);
       fprintf(stderr, "Move: x-%d y-%d who-%d\n", move.x, move.y, (int)move.who);
+      fprintf(stderr, "%d leaf nodes at depth=%d", n_leaf_nodes, i-1);
   }
   return i-1;
 }

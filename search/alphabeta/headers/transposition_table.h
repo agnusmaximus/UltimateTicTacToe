@@ -34,7 +34,6 @@ bool GetTranspositionTableEntry(State &s, TTEntry **entry) {
 
 
 void AddTranspositionTableEntry(State &s, Move &bestmove, int alpha, int beta, int value, int depth) {
-    bitset<162> bb = s.bb;
     TTEntry entry = {bestmove, value, depth, 0};
     entry = {bestmove, value, depth, 0};
     if (value <= alpha) {
@@ -46,6 +45,7 @@ void AddTranspositionTableEntry(State &s, Move &bestmove, int alpha, int beta, i
     else {
 	entry.type = EXACT_VALUE;
     }
-    transposition_table[bb] = entry;
+    transposition_table[s.bb] = entry;
 }
+
 #endif

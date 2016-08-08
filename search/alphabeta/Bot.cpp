@@ -34,7 +34,7 @@
 #define METHOD BOT
 #endif
 
-#define N_BENCHMARK_RUNS 1
+#define N_BENCHMARK_RUNS 5
 
 #include <iostream>
 #include <algorithm>
