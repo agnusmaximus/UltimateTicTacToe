@@ -16,7 +16,7 @@ test:
 	./test_bin
 playself:
 	rm -f playself_run
-	g++ -Ofast --std=c++11 Bot.cpp -DMETHOD=PLAY_DEBUG -o playself_run
+	g++ -O3 --std=c++11 Bot.cpp -DMETHOD=PLAY_DEBUG -o playself_run
 	./playself_run
 
 playrandommany:

@@ -55,7 +55,7 @@ void Case(string &t1, Move &lastmove) {
     LoadState(s, t1, lastmove, Other(lastmove.who));
     PrintBoard(s);
     printf("Lastmove: %d %d %d\n", lastmove.x, lastmove.y, lastmove.who);
-    iterative_deepening(s, DEPTH, newmove);
+    iterative_deepening(s, DEPTH, &newmove);
 }
 
 void Test1() {
@@ -129,6 +129,24 @@ void Test4() {
     Case(t1, lastmove);
 }
 
+
+void Test5() {
+    string t1 =
+	"|xoo|xox|xox\n"
+	"|ooo|xxx|ooo\n"
+	"|...|...|...\n"
+	"------------\n"
+	"|xox|xox|xox\n"
+	"|oxx|oxo|oxo\n"
+	"|x..|ooo|x..\n"
+	"------------\n"
+	"|oxx|x..|x..\n"
+	"|...|...|...\n"
+	"|oo.|xo.|...\n";
+    Move lastmove = (Move){5,4,2};
+    Case(t1, lastmove);
+}
+
 void TestWrapper(void (*test)(void)) {
     cout << "--------------------------------" << endl;
     test();
@@ -140,6 +158,7 @@ void RunTestCases() {
     TestWrapper(Test2);
     TestWrapper(Test3);
     TestWrapper(Test4);
+    TestWrapper(Test5);
 }
 
 #endif

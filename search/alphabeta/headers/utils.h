@@ -19,7 +19,7 @@
 #define PLAYER_1 1
 #define PLAYER_2 2
 #define TIE 3
-#define DEPTH 10
+#define DEPTH 20
 
 #define MIN_VALUE (-10000000)
 #define MAX_VALUE (10000000)
@@ -373,7 +373,7 @@ int GenerateValidMoves(State &s, Move *moves) {
     int lastmove_subgrid_x = -1, lastmove_subgrid_y = -1;
     if (lastmove != NULL) {
 	lastmove_subgrid_x = (lastmove->x % (BOARD_DIM/3))*3;
-	lastmove_subgrid_y = (lastmove->y % (BOARD_DIM/3))*3;
+       lastmove_subgrid_y = (lastmove->y % (BOARD_DIM/3))*3;
     }
     int can_move_anywhere = lastmove == NULL ||
 	s.results_board[lastmove_subgrid_x/3*BOARD_DIM/3+lastmove_subgrid_y/3] != EMPTY;
