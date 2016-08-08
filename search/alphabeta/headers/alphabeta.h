@@ -87,7 +87,6 @@ int alphabeta(State &s, int depth, int a, int b, Move &choose, int top_level, in
 int iterative_deepening(State &s, int depth, Move *move, bool verbose=true) {
     ResetTranspositionTable();
     auto start_start_time = GetTimeMs();
-    depth = 12 + rand()%4;
 
     int will_win = false, i, score = 0;
     int previous_score = 0;
