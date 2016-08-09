@@ -27,11 +27,8 @@ int alphabeta(State &s, int depth, int a, int b, Move &choose, int top_level, in
 	return 0;
     }
     if (depth <= 0 || GetTimeMs()-start_time >= TIME_LIMIT) {
-	//if (depth <= 0) {
 	n_leaf_nodes++;
-	//return 0;
-	//return evaluate(s);
-	return 0;
+	return evaluate(s);
     }
 
     TTEntry *entry = nullptr;
@@ -110,7 +107,7 @@ int iterative_deepening(State &s, int depth, Move *move, bool verbose=true) {
     if (verbose) {
 	fprintf(stderr, "Overall time %d ms, Score: %d\n", GetTimeMs()-start_start_time, score);
 	fprintf(stderr, "Move: x-%d y-%d who-%d\n", move->x, move->y, (int)move->who);
-	fprintf(stderr, "%d leaf nodes at depth=%d", n_leaf_nodes, i-1);
+	fprintf(stderr, "%d leaf nodes at depth=%d\n", n_leaf_nodes, i-1);
     }
 
     return i-1;
@@ -123,10 +120,7 @@ int mtdf(State &s, int depth, Move &move, int f, int start_start_time) {
     int lowerbound = MIN_VALUE;
     int b = 0;
     while (lowerbound < upperbound) {
-	if (g == lowerbound)
-	    b = g+1;
-	else
-	    b = g;
+	b = max(g, lowerbound+1);
 	g = alphabeta(s, depth, b-1, b, move, depth, start_start_time);
 	if (g < b)
 	    upperbound = g;
@@ -137,22 +131,26 @@ int mtdf(State &s, int depth, Move &move, int f, int start_start_time) {
 }
 
 // Seems buggy.
-int iterative_deepening_mtdf(State &s, int depth, Move &move, bool verbose=true) {
+int iterative_deepening_mtdf(State &s, int depth, Move *move, bool verbose=true) {
     ResetTranspositionTable();
     vector<int> guesses;
     guesses.push_back(0);
     auto start_start_time = GetTimeMs();
 
-    int i;
+    int i, score=0;
+    Move movecopy;
     for (i = 1; i <= depth; i++) {
 	if (GetTimeMs() - start_start_time >= TIME_LIMIT) {
 	    break;
 	}
 	nodes_searched = 0;
-	Move movecopy;
 	auto start_time = GetTimeMs();
 	int f = mtdf(s, i, movecopy, guesses[max(0, i-1)], start_start_time);
-	move = movecopy;
+	if (GetTimeMs() - start_start_time >= TIME_LIMIT) {
+	    break;
+	}
+	score = f;
+	memcpy(move, &movecopy, sizeof(Move));
 	guesses.push_back(f);
 	auto end_time = GetTimeMs();
 	if (verbose) {
@@ -161,8 +159,8 @@ int iterative_deepening_mtdf(State &s, int depth, Move &move, bool verbose=true)
     }
 
     if (verbose) {
-	fprintf(stderr, "Overall time %d ms, Score: %d\n", GetTimeMs()-start_start_time, guesses[guesses.size()-1]);
-	fprintf(stderr, "Move: x-%d y-%d who-%d\n", move.x, move.y, (int)move.who);
+	fprintf(stderr, "Overall time %d ms, Score: %d\n", GetTimeMs()-start_start_time, score);
+	fprintf(stderr, "Move: x-%d y-%d who-%d\n", move->x, move->y, (int)move->who);
     }
     return i-1;
 }

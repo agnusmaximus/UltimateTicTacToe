@@ -44,3 +44,12 @@ memcheck:
 bot:
 	rm -f bot_bin
 	g++ -Ofast --std=c++11 Bot.cpp -DMETHOD=BOT -o bot_bin
+clean:
+	rm -rf memcheck_bin*
+	rm -rf *_bin*
+	rm -rf playself_run
+	rm -rf profiling*
+	rm -rf *_run*
+	rm -rf callgrind*
+	rm -rf test_benchmark
+	rm -rf *output

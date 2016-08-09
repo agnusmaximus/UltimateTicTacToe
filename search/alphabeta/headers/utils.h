@@ -19,7 +19,7 @@
 #define PLAYER_1 1
 #define PLAYER_2 2
 #define TIE 3
-#define DEPTH 20
+#define DEPTH 30
 
 #define MIN_VALUE (-10000000)
 #define MAX_VALUE (10000000)
@@ -43,7 +43,7 @@ struct State {
     // Basic info.
     array<char, BOARD_DIM> results_board;
     array<char, BOARD_DIM*BOARD_DIM> board;
-    bitset<162> bb, bb2, bb3, bb4;
+    bitset<162> bb, bb2, bb3, bb4, bb5, bb6, bb7, bb8;
     vector<Move> moves;
     char cur_player;
 
@@ -70,6 +70,8 @@ struct State {
 
     // Score track
     int score[2];
+    int weights[10];
+    vector<int> movescores;
 };
 typedef struct State State;
 
@@ -94,6 +96,10 @@ void Initialize(State &s) {
     memset(s.overall_d2_counts, 0, sizeof(char) * 2);
     s.did_win_overall = false;
     memset(s.score, 0, sizeof(int) * 2);
+    memset(s.weights, 0, sizeof(int) * 10);
+    for (int i = 0; i < 10; i++)
+	s.weights[i] = 1;
+    s.movescores.reserve(DEPTH*2);
 }
 
 int GetTimeMs() {
@@ -268,6 +274,7 @@ inline bool UpdatePieceCounts(State &s, const Move &m, int subgrid_index, int c)
 	s.n_pieces_in_subgrid[subgrid_index]++;
 	didwin |= ++s.row_counts[subgrid_index][mx][m.who-1] == 3;
 	didwin |= ++s.col_counts[subgrid_index][my][m.who-1] == 3;
+
 	if (mx == my)
 	    didwin |= ++s.d1_counts[subgrid_index][m.who-1] == 3;
 	if (mx == 2-my)
@@ -277,6 +284,7 @@ inline bool UpdatePieceCounts(State &s, const Move &m, int subgrid_index, int c)
 	s.n_pieces_in_subgrid[subgrid_index]--;
 	didwin |= --s.row_counts[subgrid_index][mx][m.who-1];
 	didwin |= --s.col_counts[subgrid_index][my][m.who-1];
+
 	if (mx == my)
 	    didwin |= --s.d1_counts[subgrid_index][m.who-1];
 	if (mx == 2-my)
@@ -285,7 +293,57 @@ inline bool UpdatePieceCounts(State &s, const Move &m, int subgrid_index, int c)
     return didwin;
 }
 
+
+int EvaluateFeatures(const State &s, int features[10]) {
+    int score = 0;
+    for (int i = 0; i < 10; i++) {
+	score += s.weights[i] * features[i];
+    }
+    return score;
+}
+
+int ComputeMoveScore(const State &s, const Move &m) {
+    int mx = m.x%3, my = m.y%3;
+    int subgrid_index = m.x/3*BOARD_DIM/3+m.y/3;
+    int n_in_subgrid_row = s.row_counts[subgrid_index][mx][m.who-1];
+    int n_in_subgrid_col = s.col_counts[subgrid_index][my][m.who-1];
+    int n_in_subgrid_d1 = 0;
+    int n_in_subgrid_d2 = 0;
+    if (mx==my) {
+	n_in_subgrid_d1 = s.d1_counts[subgrid_index][m.who-1];
+    }
+    if (mx==2-my) {
+	n_in_subgrid_d2 = s.d2_counts[subgrid_index][m.who-1];
+    }
+    int did_win_subgrid = n_in_subgrid_row == 2 || n_in_subgrid_col == 2 ||
+	n_in_subgrid_d1 == 2 || n_in_subgrid_d2 == 2;
+    int i1 = subgrid_index/3, i2 = subgrid_index%3;
+    int n_in_row = s.overall_row_counts[i1][m.who-1];
+    int n_in_col = s.overall_col_counts[i2][m.who-1];
+    int n_in_d1 = 0;
+    int n_in_d2 = 0;
+    if (i1==i2) {
+	n_in_d1 = s.overall_d1_counts[m.who-1];
+    }
+    if (i1==2-i1) {
+	n_in_d2 = s.overall_d2_counts[m.who-1];
+    }
+    int n_opponent_choices = 0;
+    if (s.results_board[mx*BOARD_DIM/3+my] != EMPTY) {
+	n_opponent_choices = 9-s.n_pieces_in_subgrid[mx*BOARD_DIM/3+my];
+    }
+    else {
+	n_opponent_choices = 81 - s.moves.size();
+    }
+    int features[10] = {n_in_subgrid_row, n_in_subgrid_col, n_in_subgrid_d1, n_in_subgrid_d2,
+		      did_win_subgrid, n_in_row, n_in_col, n_in_d1, n_in_d2, n_opponent_choices};
+    return EvaluateFeatures(s, features);
+}
+
 void PerformMove(State &s, const Move &m) {
+    int movescore = ComputeMoveScore(s, m);
+    s.score[m.who-1] += movescore;
+    s.movescores.push_back(movescore);
     SetBB(s, m);
     int index = m.x * BOARD_DIM + m.y;
     int subgrid_index = m.x/3*BOARD_DIM/3+m.y/3;
@@ -293,7 +351,6 @@ void PerformMove(State &s, const Move &m) {
     if (UpdatePieceCounts(s, m, subgrid_index, 1)) {
 	s.results_board[subgrid_index] = m.who;
 	s.n_subgrids_won++;
-	s.score[m.who-1]++;
 	if (UpdateOverallPieceCounts(s, m, subgrid_index, 1)) {
 	    s.did_win_overall = true;
 	}
@@ -307,6 +364,9 @@ void PerformMove(State &s, const Move &m) {
 }
 
 void UndoMove(State &s, const Move &m) {
+    int movescore = s.movescores[s.movescores.size()-1];
+    s.score[m.who-1] -= movescore;
+    s.movescores.pop_back();
     SetBB(s, {m.x, m.y, EMPTY});
     int index = m.x * BOARD_DIM + m.y;
     s.board[index] = EMPTY;
@@ -314,7 +374,6 @@ void UndoMove(State &s, const Move &m) {
     if (s.results_board[results_index] != EMPTY) {
 	s.n_subgrids_won--;
 	if (s.results_board[results_index] == m.who) {
-	    s.score[m.who-1]--;
 	    UpdateOverallPieceCounts(s, m, results_index, -1);
 	}
     }
@@ -341,7 +400,7 @@ MoveSort(const State &state) : s(state) {}
     bool RestrictScore(const Move &m) {
 	int target_x = m.x%3;
 	int target_y = m.y%3;
-	return s.n_pieces_in_subgrid[target_x*BOARD_DIM+target_y];
+	return s.n_pieces_in_subgrid[target_x*BOARD_DIM/3+target_y];
     }
 
     bool operator() (const Move& m1, const Move& m2) {
