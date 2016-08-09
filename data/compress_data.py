@@ -1,9 +1,10 @@
 import json
 
-file_name = 'games.data'
+input_file_name = 'games.data'
+output_file_name = 'compressed_games.data'
 
-def compress_data(file_name):
-	data = json.loads(open(file_name, 'r').read())
+def compress_data(input_file_name, output_file_name):
+	data = json.loads(open(input_file_name, 'r').read())
 	compressed_data = []
 	for game_object in data:
 		game = game_object['states']
@@ -23,12 +24,12 @@ def compress_data(file_name):
 			prev_board = cur_board
 		game_object['states'] = {'move_history': move_history, 'board': cur_board}
 	compressed_data = json.dumps(data)
-	out_file = open('%s.compressed' % file_name, 'w')
+	out_file = open(output_file_name, 'w')
 	out_file.write(compressed_data)
 	out_file.close()
 
 def main():
-	compress_data(file_name)
+	compress_data(input_file_name, output_file_name)
 
 if __name__ == '__main__':
 	main()

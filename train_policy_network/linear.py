@@ -8,11 +8,11 @@ import sys
 # TODO: use flags instead
 input_file_name = '../data/processed_games.mat'
 initial_learning_rate = .1
-num_steps = 5001
+num_steps = 10001
 
 BATCH_SIZE = 8192
 IMAGE_SIZE = 9
-NUM_CHANNELS = 4
+NUM_CHANNELS = 8
 EVAL_FREQUENCY = 10
 NUM_LABELS = 81
 SAVE_FREQUENCY = 1000
@@ -87,7 +87,7 @@ def main():
 	learning_rate = tf.train.exponential_decay(
 		initial_learning_rate,
 		step,
-		10,
+		num_steps / 500,
 		pow(10, -.01),
 		staircase=True)
 	optimizer = tf.train.AdamOptimizer(learning_rate).minimize(loss, global_step=step)
@@ -157,7 +157,7 @@ def main():
 				sys.stdout.flush()
 
 			if step % SAVE_FREQUENCY == 0:
-				save_path = saver.save(sess, "./linear_model/model_{}.ckpt".format(step))
+				save_path = saver.save(sess, "./linear_model2/model_{}.ckpt".format(step))
 				print("Model saved in file: %s" % save_path)
 		# Finally print the result!
 		test_error = error_rate(eval_in_batches(test_data, sess), test_labels)
