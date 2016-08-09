@@ -44,6 +44,11 @@ memcheck:
 bot:
 	rm -f bot_bin
 	g++ -Ofast --std=c++11 Bot.cpp -DMETHOD=BOT -o bot_bin
+
+tune_features:
+	rm -f tune_features_bin
+	g++ -Ofast --std=c++11 tuning/tune_eval_weights.cpp -o tune_features_bin
+	./tune_features_bin
 clean:
 	rm -rf memcheck_bin*
 	rm -rf *_bin*
@@ -53,3 +58,4 @@ clean:
 	rm -rf callgrind*
 	rm -rf test_benchmark
 	rm -rf *output
+	rm -rf tune_features_bin

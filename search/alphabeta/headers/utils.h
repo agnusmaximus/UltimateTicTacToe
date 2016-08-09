@@ -20,6 +20,7 @@
 #define PLAYER_2 2
 #define TIE 3
 #define DEPTH 30
+#define N_EVAL_WEIGHTS 10
 
 #define MIN_VALUE (-10000000)
 #define MAX_VALUE (10000000)
@@ -69,9 +70,9 @@ struct State {
     int history[BOARD_DIM][BOARD_DIM][2];
 
     // Score track
-    int score[2];
-    int weights[10];
-    vector<int> movescores;
+    float score[2];
+    float weights[N_EVAL_WEIGHTS];
+    vector<float> movescores;
 };
 typedef struct State State;
 
@@ -96,10 +97,15 @@ void Initialize(State &s) {
     memset(s.overall_d2_counts, 0, sizeof(char) * 2);
     s.did_win_overall = false;
     memset(s.score, 0, sizeof(int) * 2);
-    memset(s.weights, 0, sizeof(int) * 10);
-    for (int i = 0; i < 10; i++)
+    memset(s.weights, 0, sizeof(int) * N_EVAL_WEIGHTS);
+    for (int i = 0; i < N_EVAL_WEIGHTS; i++)
 	s.weights[i] = 1;
     s.movescores.reserve(DEPTH*2);
+}
+
+void InitializeWithWeights(State &s, float *weights) {
+    Initialize(s);
+    memcpy(s.weights, weights, sizeof(float) * N_EVAL_WEIGHTS);
 }
 
 int GetTimeMs() {
@@ -294,15 +300,15 @@ inline bool UpdatePieceCounts(State &s, const Move &m, int subgrid_index, int c)
 }
 
 
-int EvaluateFeatures(const State &s, int features[10]) {
-    int score = 0;
-    for (int i = 0; i < 10; i++) {
+float EvaluateFeatures(const State &s, int features[N_EVAL_WEIGHTS]) {
+    float score = 0;
+    for (int i = 0; i < N_EVAL_WEIGHTS; i++) {
 	score += s.weights[i] * features[i];
     }
     return score;
 }
 
-int ComputeMoveScore(const State &s, const Move &m) {
+float ComputeMoveScore(const State &s, const Move &m) {
     int mx = m.x%3, my = m.y%3;
     int subgrid_index = m.x/3*BOARD_DIM/3+m.y/3;
     int n_in_subgrid_row = s.row_counts[subgrid_index][mx][m.who-1];
@@ -335,8 +341,8 @@ int ComputeMoveScore(const State &s, const Move &m) {
     else {
 	n_opponent_choices = 81 - s.moves.size();
     }
-    int features[10] = {n_in_subgrid_row, n_in_subgrid_col, n_in_subgrid_d1, n_in_subgrid_d2,
-		      did_win_subgrid, n_in_row, n_in_col, n_in_d1, n_in_d2, n_opponent_choices};
+    int features[N_EVAL_WEIGHTS] = {n_in_subgrid_row, n_in_subgrid_col, n_in_subgrid_d1, n_in_subgrid_d2,
+				  did_win_subgrid, n_in_row, n_in_col, n_in_d1, n_in_d2, n_opponent_choices};
     return EvaluateFeatures(s, features);
 }
 
