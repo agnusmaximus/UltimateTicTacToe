@@ -1,8 +1,10 @@
 #include <iostream>
 #include <chrono>
 #include <random>
-#include "../headers/utils.h"
-#include "../headers/alphabeta.h"
+#include <math.h>
+#include <time.h>
+#include "../alphabeta/headers/utils.h"
+#include "../alphabeta/headers/alphabeta.h"
 
 using namespace std;
 
@@ -17,6 +19,8 @@ using namespace std;
 #define K_FACTOR 100
 #define BASE_ELO_RATING 1400
 #define KILL_RATIO .20
+
+#define TUNE_DEPTH 8
 
 struct Individual {
     float weights[N_WEIGHTS];
@@ -33,7 +37,7 @@ struct IndividualSort {
 };
 
 double PlayValue(const Individual &a) {
-    return 97 / (a.n_games_played+1) + 42 * (a.elo_rating/BASE_ELO_RATING);
+    return 420 * (a.elo_rating/BASE_ELO_RATING) + 97/(double)(a.n_games_played+1);
 }
 
 struct WillingnessToPlaySort {
@@ -84,7 +88,7 @@ int Play(Individual &a, Individual &b) {
     int turn = 0;
     while (true) {
 	Move first_player_move;
-	iterative_deepening(s1, 100, &first_player_move, false);
+	iterative_deepening(s1, TUNE_DEPTH, &first_player_move, false);
 	PerformMove(s1, first_player_move);
 	PerformMove(s2, first_player_move);
 
@@ -93,7 +97,7 @@ int Play(Individual &a, Individual &b) {
 	if (CheckEnd(s1) == TIE) return PP_TIE;
 
 	Move second_player_move;
-	iterative_deepening(s2, 100, &second_player_move, false);
+	iterative_deepening(s2, TUNE_DEPTH, &second_player_move, false);
 	PerformMove(s1, second_player_move);
 	PerformMove(s2, second_player_move);
 
@@ -120,7 +124,7 @@ string IndividualString(const Individual &i) {
 	    result += ", ";
 	result += to_string(i.weights[k]);
     }
-    result += "}\n";
+    result += "} " + to_string(i.n_games_played) + "\n";
     return result;
 }
 
@@ -143,16 +147,15 @@ void PlayIndividuals(Individual &first, Individual &second) {
     if (result == PP_WIN || result == PP_LOSE) {
 	cout << "Winner:" << endl;
 	if (result == PP_WIN) {
-	    cout << IndividualString(first) << endl;
+	    cout << IndividualString(first);
 	}
 	else {
-	    cout << IndividualString(second) << endl;
+	    cout << IndividualString(second);
 	}
     }
     else {
-	cout << "Tie" << endl;;
+	cout << "Tie" << endl;
     }
-    printf("----------------------------------------\n");
 }
 
 string PrintTopIndividuals(vector<Individual> &v) {
@@ -164,20 +167,22 @@ string PrintTopIndividuals(vector<Individual> &v) {
 }
 
 double fRand(double fMin, double fMax) {
-    double f = (double)rand() / RAND_MAX;
-    return fMin + f * (fMax - fMin);
+    std::mt19937 rng;
+    std::uniform_real_distribution<double> dist(fMin, fMax);
+    rng.seed(std::random_device{}());
+    return dist(rng);
 }
 
 int SelectIndividualToPlay(vector<Individual> &individuals) {
     double total_play_score = 0;
     for (const auto &individual : individuals) {
-	total_play_score += PlayValue(individual);
+	total_play_score += pow(PlayValue(individual), 3);
     }
     double random_value = fRand(0, total_play_score);
     double cur_value = 0;
     for (int i = 0; i < individuals.size(); i++) {
-	if (cur_value >= random_value) return i;
-	cur_value += PlayValue(individuals[i]);
+	if (cur_value + pow(PlayValue(individuals[i]), 3) >= random_value) return i;
+	cur_value += pow(PlayValue(individuals[i]), 3);
     }
     return individuals.size()-1;
 }
@@ -194,8 +199,9 @@ vector<Individual> UnfitIndividualsDie(vector<Individual> &v) {
 
 int ProbSelectOnElo(vector<Individual> &v, double total_elo_score) {
     double cur = 0;
+    double random_elo_score = fRand(0, total_elo_score);
     for (int i = 0; i < v.size(); i++) {
-	if (cur >= total_elo_score) return i;
+	if (cur + v[i].elo_rating >= random_elo_score) return i;
 	cur += v[i].elo_rating;
     }
     return v.size()-1;
@@ -220,6 +226,7 @@ Individual Reproduce(Individual &a, Individual &b) {
 	new_individual.weights[i] = new_weight;
     }
     new_individual.elo_rating = (a.elo_rating + b.elo_rating) / 2;
+    new_individual.n_games_played = 0;
     return new_individual;
 }
 
@@ -252,10 +259,11 @@ int main(void) {
     for (int epoch = 0; epoch < N_EPOCHS; epoch++) {
 	cout << individuals.size() << endl;
 	sort(individuals.begin(), individuals.end(), IndividualSort());
+	if (individuals.size() < 10) break;
 	string individuals_strings = PrintTopIndividuals(individuals);
 	cout << individuals_strings;
 	for (int iter = 0; iter < EVALUATIONS_PER_EPOCH; iter++) {
-	    int i, j = -1;
+	    int i = -1, j = -1;
 	    i = SelectIndividualToPlay(individuals);
 	    while (j==-1 || i == j) {
 		j = SelectIndividualToPlay(individuals);

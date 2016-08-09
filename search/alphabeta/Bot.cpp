@@ -29,6 +29,7 @@
 #define PLAY_RANDOM_MANY 4
 #define RUN_TESTS 5
 #define BENCHMARK 6
+#define PIT_WEIGHTS 7
 
 #ifndef METHOD
 #define METHOD BOT
@@ -263,6 +264,34 @@ char CheckEnd(State &s, bool verbose=true) {
     return EMPTY;
 }
 
+void PitWeights() {
+    float w2[] = {2.463815, 3.367671, -0.172622, 0.233192, 4.869785, -1.116335, 1.797125, 1.771483, 4.480380, 0.845699};
+    float w1[] = {1.982305, 2.285024, -0.244550, 1.183039, 0.201437, 0.677005, 0.618375, 0.817572, 3.067734, 2.006065};
+    //float w1[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+
+    State s1, s2;
+    InitializeWithWeights(s1, w1);
+    InitializeWithWeights(s2, w2);
+    int turn = 0;
+    while (true) {
+	Move first_player_move;
+	iterative_deepening(s1, DEPTH, &first_player_move, true);
+	PerformMove(s1, first_player_move);
+	PerformMove(s2, first_player_move);
+
+	PrintBoard(s1);
+	if (CheckEnd(s1)) break;
+
+	Move second_player_move;
+	iterative_deepening(s2, DEPTH, &second_player_move, true);
+	PerformMove(s1, second_player_move);
+	PerformMove(s2, second_player_move);
+
+	PrintBoard(s1);
+	if (CheckEnd(s1)) break;
+    }
+}
+
 void DebugPlaySelf() {
     State s;
     Move bestmove;
@@ -419,5 +448,8 @@ int main() {
     }
     if (METHOD == BENCHMARK) {
 	BenchmarkAgainstRandom();
+    }
+    if (METHOD == PIT_WEIGHTS) {
+	PitWeights();
     }
 }

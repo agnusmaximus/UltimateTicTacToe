@@ -98,8 +98,8 @@ void Initialize(State &s) {
     s.did_win_overall = false;
     memset(s.score, 0, sizeof(int) * 2);
     memset(s.weights, 0, sizeof(int) * N_EVAL_WEIGHTS);
-    for (int i = 0; i < N_EVAL_WEIGHTS; i++)
-	s.weights[i] = 1;
+    float assigned_weights[] = {1.982305, 2.285024, -0.244550, 1.183039, 0.201437, 0.677005, 0.618375, 0.817572, 3.067734, 2.006065};
+    memcpy(s.weights, assigned_weights, sizeof(float) * N_EVAL_WEIGHTS);
     s.movescores.reserve(DEPTH*2);
 }
 
@@ -328,6 +328,7 @@ float ComputeMoveScore(const State &s, const Move &m) {
     int n_in_col = s.overall_col_counts[i2][m.who-1];
     int n_in_d1 = 0;
     int n_in_d2 = 0;
+    int control_of_center = 0;
     if (i1==i2) {
 	n_in_d1 = s.overall_d1_counts[m.who-1];
     }
@@ -342,7 +343,7 @@ float ComputeMoveScore(const State &s, const Move &m) {
 	n_opponent_choices = 81 - s.moves.size();
     }
     int features[N_EVAL_WEIGHTS] = {n_in_subgrid_row, n_in_subgrid_col, n_in_subgrid_d1, n_in_subgrid_d2,
-				  did_win_subgrid, n_in_row, n_in_col, n_in_d1, n_in_d2, n_opponent_choices};
+				    did_win_subgrid, n_in_row, n_in_col, n_in_d1, n_in_d2, n_opponent_choices};
     return EvaluateFeatures(s, features);
 }
 

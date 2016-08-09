@@ -5,6 +5,7 @@ PLAY_RANDOM=3
 PLAY_RANDOM_MANY=4
 TEST=5
 BENCHMARK=6
+PIT_WEIGHTS=7
 
 benchmark:
 	rm -f benchmark_run
@@ -47,9 +48,14 @@ bot:
 
 tune_features:
 	rm -f tune_features_bin
-	g++ -Ofast --std=c++11 tuning/tune_eval_weights.cpp -o tune_features_bin
+	g++ -Ofast --std=c++11 ../tuning/tune_eval_weights.cpp -o tune_features_bin
 	./tune_features_bin
+pit_weights:
+	rm -f pit_weights_bin
+	g++ -Ofast --std=c++11 Bot.cpp -DMETHOD=PIT_WEIGHTS -DVERBOSE=1 -o pit_weights_bin
+	./pit_weights_bin
 clean:
+	rm -f pit_weights_bin*
 	rm -rf memcheck_bin*
 	rm -rf *_bin*
 	rm -rf playself_run
