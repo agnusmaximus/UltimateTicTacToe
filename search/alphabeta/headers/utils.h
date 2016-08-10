@@ -20,7 +20,7 @@
 #define PLAYER_2 2
 #define TIE 3
 #define DEPTH 20
-#define N_EVAL_WEIGHTS 10
+#define N_EVAL_WEIGHTS 13
 
 #define MIN_VALUE (-10000000)
 #define MAX_VALUE (10000000)
@@ -317,11 +317,15 @@ float ComputeMoveScore(const State &s, const Move &m) {
     int n_in_subgrid_col = s.col_counts[subgrid_index][my][m.who-1];
     int n_in_subgrid_d1 = 0;
     int n_in_subgrid_d2 = 0;
+    int is_center_placement = 0;
     if (mx==my) {
 	n_in_subgrid_d1 = s.d1_counts[subgrid_index][m.who-1];
     }
     if (mx==2-my) {
 	n_in_subgrid_d2 = s.d2_counts[subgrid_index][m.who-1];
+    }
+    if (mx==1 && my==1) {
+	is_center_placement = 1;
     }
     int did_win_subgrid = n_in_subgrid_row == 2 || n_in_subgrid_col == 2 ||
 	n_in_subgrid_d1 == 2 || n_in_subgrid_d2 == 2;
@@ -330,6 +334,8 @@ float ComputeMoveScore(const State &s, const Move &m) {
     int n_in_col = 0;
     int n_in_d1 = 0;
     int n_in_d2 = 0;
+    int did_win_center_subgrid = 0;
+    int potential_ways_to_win_game = 0;
     if (did_win_subgrid) {
 	n_in_row = s.overall_row_counts[i1][m.who-1];
 	n_in_col = s.overall_col_counts[i2][m.who-1];
@@ -339,6 +345,22 @@ float ComputeMoveScore(const State &s, const Move &m) {
 	if (i1==2-i1) {
 	    n_in_d2 = s.overall_d2_counts[m.who-1];
 	}
+	if (i1==1 && i2==1) {
+	    did_win_center_subgrid = 1;
+	}
+
+	if (n_in_row == 1 && s.overall_row_counts[i1][Other(m.who)-1] == 0) {
+	    potential_ways_to_win_game++;
+	}
+	if (n_in_col == 1 && s.overall_col_counts[i2][Other(m.who)-1] == 0) {
+	    potential_ways_to_win_game++;
+	}
+	if (n_in_d2 == 1 && s.overall_d2_counts[Other(m.who)-1] == 0) {
+	    potential_ways_to_win_game++;
+	}
+	if (n_in_d1 == 1 && s.overall_d1_counts[Other(m.who)-1] == 0) {
+	    potential_ways_to_win_game++;
+	}
     }
     int n_opponent_choices = 0;
     if (s.results_board[mx*BOARD_DIM/3+my] != EMPTY) {
@@ -347,8 +369,24 @@ float ComputeMoveScore(const State &s, const Move &m) {
     else {
 	n_opponent_choices = 81 - s.moves.size();
     }
+
+    int potential_ways_to_win_subgrid = 0;
+    if (n_in_subgrid_row == 1 && s.row_counts[subgrid_index][mx][Other(m.who)-1] == 0) {
+	potential_ways_to_win_subgrid++;
+    }
+    if (n_in_subgrid_col == 1 && s.col_counts[subgrid_index][my][Other(m.who)-1] == 0) {
+	potential_ways_to_win_subgrid++;
+    }
+    if (n_in_subgrid_d1 == 1 && s.d1_counts[subgrid_index][Other(m.who)-1] == 0) {
+	potential_ways_to_win_subgrid++;
+    }
+    if (n_in_subgrid_d2 == 1 && s.d2_counts[subgrid_index][Other(m.who)-1] == 0) {
+	potential_ways_to_win_subgrid++;
+    }
+
     int features[N_EVAL_WEIGHTS] = {n_in_subgrid_row, n_in_subgrid_col, n_in_subgrid_d1, n_in_subgrid_d2,
-				    did_win_subgrid, n_in_row, n_in_col, n_in_d1, n_in_d2, n_opponent_choices};
+				    did_win_subgrid, n_in_row, n_in_col, n_in_d1, n_in_d2, n_opponent_choices,
+                                    did_win_center_subgrid, potential_ways_to_win_subgrid, potential_ways_to_win_game};
     return EvaluateFeatures(s, features);
 }
 

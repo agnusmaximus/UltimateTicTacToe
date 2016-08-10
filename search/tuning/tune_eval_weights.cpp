@@ -15,17 +15,18 @@ using namespace std;
 #define POPULATION_SIZE 1000
 #define EVALUATIONS_PER_EPOCH 100
 #define N_EPOCHS 1000000
-#define N_WEIGHTS 10
+#define N_WEIGHTS 13
 #define K_FACTOR 100
 #define BASE_ELO_RATING 1400
 #define KILL_RATIO .20
 
-#define TUNE_DEPTH 8
+#define TUNE_DEPTH 2
 
 struct Individual {
     float weights[N_WEIGHTS];
     double elo_rating;
     int n_games_played;
+    int won_as_first, won_as_second, ties;
     double generation;
 };
 
@@ -59,6 +60,9 @@ Individual CreateRandomIndividual() {
     individual.elo_rating = BASE_ELO_RATING;
     individual.n_games_played = 0;
     individual.generation = 0;
+    individual.won_as_first = 0;
+    individual.won_as_second = 0;
+    individual.ties = 0;
     return individual;
 }
 
@@ -114,20 +118,21 @@ double Play(Individual &a, Individual &b, string &r_string) {
 
     if (r1_result == PLAYER_1) {
 	r_string += "P1,";
+	a.won_as_first++;
     }
     else if (r1_result == TIE) {
 	r_string += "TIE,";
+	a.ties++;
+	b.ties++;
     }
     else if (r1_result == PLAYER_2) {
 	r_string += "P2,";
+	b.won_as_second++;
     }
     else {
 	cout << "ERROR: invalid game result" << endl;
 	exit(0);
     }
-
-    if (r1_result == PLAYER_1) p1_score += .5;
-    if (r1_result == TIE) p1_score += .25;
 
     int r2_result;
     InitializeWithWeights(s1, a.weights);
@@ -156,22 +161,41 @@ double Play(Individual &a, Individual &b, string &r_string) {
 
     if (r2_result == PLAYER_1) {
 	r_string += "P2";
+	b.won_as_first++;
     }
     else if (r2_result == TIE) {
 	r_string += "TIE";
+	b.ties++;
+	a.ties++;
     }
     else if (r2_result == PLAYER_2) {
 	r_string += "P1";
+	a.won_as_second++;
     }
     else {
 	cout << "ERROR: invalid game result for game 2" << endl;
 	exit(0);
     }
 
-    cout << r2_result << endl;
-    if (r2_result == PLAYER_2) p1_score += .5;
-    if (r2_result == TIE) p1_score += .25;
-    cout << "SCORE: " << p1_score << endl;
+    // WW -> 1
+    // WL or LW -> .5
+    // WT -> .90
+    if (r1_result==PLAYER_1 && r2_result==PLAYER_2)
+	p1_score = 1;
+    if (r1_result==PLAYER_2 && r2_result==PLAYER_1)
+	p1_score = 0;
+    if ((r1_result==PLAYER_2 && r2_result==PLAYER_2) ||
+	(r1_result==PLAYER_1 && r2_result==PLAYER_1))
+	p1_score = .5;
+    if ((r1_result==PLAYER_1 && r2_result==TIE) ||
+	(r1_result==TIE && r2_result==PLAYER_2))
+	p1_score = .9;
+    if ((r1_result==PLAYER_2 && r2_result==TIE) ||
+	(r1_result==TIE && r2_result==PLAYER_1))
+	p1_score = .1;
+    if (r1_result==TIE && r2_result==TIE)
+	p1_score = .5;
+    cout << "Score: " << p1_score << endl;
     return p1_score;
 }
 
@@ -188,7 +212,11 @@ string IndividualString(const Individual &i) {
 	    result += ", ";
 	result += to_string(i.weights[k]);
     }
-    result += "} n_games: " + to_string(i.n_games_played) + " generation: " + to_string(i.generation) + "\n";
+    result += "} n_games: " + to_string(i.n_games_played) +
+	", won_as_first: " + to_string(i.won_as_first) +
+	", won as second: " + to_string(i.won_as_second) +
+	", n_ties: " + to_string(i.ties) +
+	", generation: " + to_string(i.generation) + "\n";
     return result;
 }
 
@@ -278,6 +306,9 @@ Individual Reproduce(Individual &a, Individual &b) {
     new_individual.elo_rating = min(a.elo_rating, b.elo_rating) * (double)3 / 4 + max(a.elo_rating, b.elo_rating)/(double)4;
     new_individual.n_games_played = 0;
     new_individual.generation = max(a.generation, b.generation)+1;
+    new_individual.won_as_first = 0;
+    new_individual.won_as_second = 0;
+    new_individual.ties = 0;
     return new_individual;
 }
 
