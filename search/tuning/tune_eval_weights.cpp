@@ -14,7 +14,7 @@ using namespace std;
 
 #define POPULATION_SIZE 1000
 #define EVALUATIONS_PER_EPOCH 100
-#define N_EPOCHS 100
+#define N_EPOCHS 1000000
 #define N_WEIGHTS 10
 #define K_FACTOR 100
 #define BASE_ELO_RATING 1400
@@ -26,6 +26,7 @@ struct Individual {
     float weights[N_WEIGHTS];
     double elo_rating;
     int n_games_played;
+    double generation;
 };
 
 typedef struct Individual Individual;
@@ -57,6 +58,7 @@ Individual CreateRandomIndividual() {
     }
     individual.elo_rating = BASE_ELO_RATING;
     individual.n_games_played = 0;
+    individual.generation = 0;
     return individual;
 }
 
@@ -81,37 +83,99 @@ char CheckEnd(State &s, bool verbose=true) {
     return EMPTY;
 }
 
-int Play(Individual &a, Individual &b) {
+double Play(Individual &a, Individual &b, string &r_string) {
+    double p1_score = 0;
+
     State s1, s2;
     InitializeWithWeights(s1, a.weights);
     InitializeWithWeights(s2, b.weights);
-    int turn = 0;
+    int r1_result;
     while (true) {
 	Move first_player_move;
 	iterative_deepening(s1, TUNE_DEPTH, &first_player_move, false);
 	PerformMove(s1, first_player_move);
 	PerformMove(s2, first_player_move);
 
-	if (CheckEnd(s1) == PLAYER_1) return PP_WIN;
-	if (CheckEnd(s1) == PLAYER_2) return PP_LOSE;
-	if (CheckEnd(s1) == TIE) return PP_TIE;
+	r1_result = CheckEnd(s1);
+	if (r1_result == PLAYER_1 ||
+	    r1_result == PLAYER_2 ||
+	    r1_result == TIE) break;
 
 	Move second_player_move;
 	iterative_deepening(s2, TUNE_DEPTH, &second_player_move, false);
 	PerformMove(s1, second_player_move);
 	PerformMove(s2, second_player_move);
 
-	if (CheckEnd(s1) == PLAYER_1) return PP_WIN;
-	if (CheckEnd(s1) == PLAYER_2) return PP_LOSE;
-	if (CheckEnd(s1) == TIE) return PP_TIE;
+	r1_result = CheckEnd(s1);
+	if (r1_result == PLAYER_1 ||
+	    r1_result == PLAYER_2 ||
+	    r1_result == TIE) break;
     }
+
+    if (r1_result == PLAYER_1) {
+	r_string += "P1,";
+    }
+    else if (r1_result == TIE) {
+	r_string += "TIE,";
+    }
+    else if (r1_result == PLAYER_2) {
+	r_string += "P2,";
+    }
+    else {
+	cout << "ERROR: invalid game result" << endl;
+	exit(0);
+    }
+
+    if (r1_result == PLAYER_1) p1_score += .5;
+    if (r1_result == TIE) p1_score += .25;
+
+    int r2_result;
+    InitializeWithWeights(s1, a.weights);
+    InitializeWithWeights(s2, b.weights);
+    while (true) {
+	Move first_player_move;
+	iterative_deepening(s2, TUNE_DEPTH, &first_player_move, false);
+	PerformMove(s1, first_player_move);
+	PerformMove(s2, first_player_move);
+
+	r2_result = CheckEnd(s1);
+	if (r2_result == PLAYER_1 ||
+	    r2_result == PLAYER_2 ||
+	    r2_result == TIE) break;
+
+	Move second_player_move;
+	iterative_deepening(s1, TUNE_DEPTH, &second_player_move, false);
+	PerformMove(s1, second_player_move);
+	PerformMove(s2, second_player_move);
+
+	r2_result = CheckEnd(s1);
+	if (r2_result == PLAYER_1 ||
+	    r2_result == PLAYER_2 ||
+	    r2_result == TIE) break;
+    }
+
+    if (r2_result == PLAYER_1) {
+	r_string += "P2";
+    }
+    else if (r2_result == TIE) {
+	r_string += "TIE";
+    }
+    else if (r2_result == PLAYER_2) {
+	r_string += "P1";
+    }
+    else {
+	cout << "ERROR: invalid game result for game 2" << endl;
+	exit(0);
+    }
+
+    cout << r2_result << endl;
+    if (r2_result == PLAYER_2) p1_score += .5;
+    if (r2_result == TIE) p1_score += .25;
+    cout << "SCORE: " << p1_score << endl;
+    return p1_score;
 }
 
-void UpdateEloScore(Individual &first, double self_rating, double other_rating, int did_win) {
-    double score = 0;
-    if (did_win == PP_WIN) score = 1;
-    if (did_win == PP_LOSE) score = 0;
-    if (did_win == PP_TIE) score = .5;
+void UpdateEloScore(Individual &first, double self_rating, double other_rating, double score) {
     double expected = 1 / (pow(10, -1 * (self_rating-other_rating)/400)+1);
     double rn = self_rating + K_FACTOR * (score - expected);
     first.elo_rating = rn;
@@ -124,38 +188,23 @@ string IndividualString(const Individual &i) {
 	    result += ", ";
 	result += to_string(i.weights[k]);
     }
-    result += "} " + to_string(i.n_games_played) + "\n";
+    result += "} n_games: " + to_string(i.n_games_played) + " generation: " + to_string(i.generation) + "\n";
     return result;
 }
 
 void PlayIndividuals(Individual &first, Individual &second) {
     printf("----------------------------------------\n");
     printf("Playing:\n%s%s", IndividualString(first).c_str(), IndividualString(second).c_str());
-    int result = Play(first, second);
+    string result_string;
+    double result = Play(first, second, result_string);
     double rating1 = first.elo_rating;
     double rating2 = second.elo_rating;
-    if (result == PP_WIN) {
-	UpdateEloScore(first, rating1, rating2, PP_WIN);
-	UpdateEloScore(second, rating2, rating1, PP_LOSE);
-    }
-    else {
-	UpdateEloScore(second, rating2, rating1, PP_WIN);
-	UpdateEloScore(first, rating1, rating2, PP_LOSE);
-    }
+    UpdateEloScore(first, rating1, rating2, result);
+    UpdateEloScore(second, rating2, rating1, 1-result);
+    cout << "Result: " << result_string << endl;
     first.n_games_played++;
     second.n_games_played++;
-    if (result == PP_WIN || result == PP_LOSE) {
-	cout << "Winner:" << endl;
-	if (result == PP_WIN) {
-	    cout << IndividualString(first);
-	}
-	else {
-	    cout << IndividualString(second);
-	}
-    }
-    else {
-	cout << "Tie" << endl;
-    }
+    printf("New scores:\n%s%s", IndividualString(first).c_str(), IndividualString(second).c_str());
 }
 
 string PrintTopIndividuals(vector<Individual> &v) {
@@ -212,7 +261,7 @@ Individual Reproduce(Individual &a, Individual &b) {
     for (int i = 0; i < N_WEIGHTS; i++) {
 	int choice = rand() % 4;
 	float w1 = a.weights[i],  w2 = b.weights[i];
-	int new_weight = 0;
+	float new_weight = 0;
 	if (choice == 0) {
 	    new_weight = max(w1, w2);
 	}
@@ -225,8 +274,10 @@ Individual Reproduce(Individual &a, Individual &b) {
 	new_weight += mutation(generator);
 	new_individual.weights[i] = new_weight;
     }
-    new_individual.elo_rating = (a.elo_rating + b.elo_rating) / 2;
+    //new_individual.elo_rating = (a.elo_rating + b.elo_rating) / 2;
+    new_individual.elo_rating = min(a.elo_rating, b.elo_rating) * (double)3 / 4 + max(a.elo_rating, b.elo_rating)/(double)4;
     new_individual.n_games_played = 0;
+    new_individual.generation = max(a.generation, b.generation)+1;
     return new_individual;
 }
 
@@ -241,6 +292,7 @@ void FitIndividualsReproduce(vector<Individual> &v) {
 	int first = ProbSelectOnElo(v, total_elo_score);
 	int second = ProbSelectOnElo(v, total_elo_score);
 	Individual new_individual = Reproduce(v[first], v[second]);
+	news.push_back(new_individual);
     }
     for (int i = 0; i < news.size(); i++) {
 	v.push_back(news[i]);
