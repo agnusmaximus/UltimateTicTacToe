@@ -19,7 +19,7 @@
 #define PLAYER_1 1
 #define PLAYER_2 2
 #define TIE 3
-#define DEPTH 30
+#define DEPTH 20
 #define N_EVAL_WEIGHTS 10
 
 #define MIN_VALUE (-10000000)
@@ -98,7 +98,9 @@ void Initialize(State &s) {
     s.did_win_overall = false;
     memset(s.score, 0, sizeof(int) * 2);
     memset(s.weights, 0, sizeof(int) * N_EVAL_WEIGHTS);
-    float assigned_weights[] = {1.982305, 2.285024, -0.244550, 1.183039, 0.201437, 0.677005, 0.618375, 0.817572, 3.067734, 2.006065};
+    //float assigned_weights[] = {1.982305, 2.285024, -0.244550, 1.183039, 0.201437, 0.677005, 0.618375, 0.817572, 3.067734, 2.006065};
+    //float assigned_weights[] = {2.010555, 1.686991, 1.233871, 1.199789, 2.364061, 1.082502, 2.577447, 0.193707, 0.499667, 0.114329};
+    float assigned_weights[] = {1.586858, 2.698336, 0.528802, -0.064983, 2.015526, 1.180479, 0.691811, 0.920403, 1.087781, 0.131057};
     memcpy(s.weights, assigned_weights, sizeof(float) * N_EVAL_WEIGHTS);
     s.movescores.reserve(DEPTH*2);
 }
@@ -324,16 +326,19 @@ float ComputeMoveScore(const State &s, const Move &m) {
     int did_win_subgrid = n_in_subgrid_row == 2 || n_in_subgrid_col == 2 ||
 	n_in_subgrid_d1 == 2 || n_in_subgrid_d2 == 2;
     int i1 = subgrid_index/3, i2 = subgrid_index%3;
-    int n_in_row = s.overall_row_counts[i1][m.who-1];
-    int n_in_col = s.overall_col_counts[i2][m.who-1];
+    int n_in_row = 0;
+    int n_in_col = 0;
     int n_in_d1 = 0;
     int n_in_d2 = 0;
-    int control_of_center = 0;
-    if (i1==i2) {
-	n_in_d1 = s.overall_d1_counts[m.who-1];
-    }
-    if (i1==2-i1) {
-	n_in_d2 = s.overall_d2_counts[m.who-1];
+    if (did_win_subgrid) {
+	n_in_row = s.overall_row_counts[i1][m.who-1];
+	n_in_col = s.overall_col_counts[i2][m.who-1];
+	if (i1==i2) {
+	    n_in_d1 = s.overall_d1_counts[m.who-1];
+	}
+	if (i1==2-i1) {
+	    n_in_d2 = s.overall_d2_counts[m.who-1];
+	}
     }
     int n_opponent_choices = 0;
     if (s.results_board[mx*BOARD_DIM/3+my] != EMPTY) {
