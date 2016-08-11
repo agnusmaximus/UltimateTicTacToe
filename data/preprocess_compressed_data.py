@@ -15,7 +15,7 @@ augment_data = True
 # whether or not to shuffle the data
 shuffle_data = True
 BOARD_DIM = 9
-NUM_FEATURES = 8
+NUM_FEATURES = 9
 
 # finds out which subboards is it possible to move in.
 # returns 3x3 np array of bools
@@ -101,8 +101,23 @@ def get_rows(board):
 						el = board[sub_board[0] + spot[0], sub_board[1] + spot[1]]
 						if el == 0:
 							twos_almost[sub_board[0] + spot[0], sub_board[1] + spot[1]] = True
+
+	# should have all of them be false if the board is not open
+	for board_y in range(3):
+		for board_x in range(3):
+			if not open_boards[board_y, board_x]:
+				for feature_board in [ones_open, twos_open, ones_almost, twos_almost]:
+					feature_board[board_y*3: (board_y+1)*3, board_x*3: (board_x+1)*3] = False
 	return ones_open, twos_open, ones_almost, twos_almost
 
+# gets the spots where it is possible to send opponent to specific board
+def get_open_board(board):
+	open_boards = get_open_boards(board)
+	send_to_board = np.zeros((9, 9), dtype=np.bool)
+	for board_y in range(3):
+		for board_x in range(3):
+			send_to_board[board_y*3: (board_y+1)*3, board_x*3: (board_x+1)*3] = open_boards
+	return send_to_board
 
 # (y, x) -> (x, y)
 def transpose_move(move):
@@ -114,9 +129,12 @@ def reverse_rows_move(move):
 
 # extracts features into numpy array. Dimensions are:
 # (num moves x num feature planes x board size)
-# feature planes are:
+# feature planes are (total of 9):
 # 	Plane of 0s, 1s, 2s (3 planes)
 # 	Plane of possible response moves (1 plane)
+#	Plane where it is possible to complete a row of 3 for 1s, 2s (2 planes)
+#	Plane where if moved here can complete a row of 3 for 1s, 2s (2 planes)
+#	Plane where this will send the opponent to a specific board vs. open board (1 plane)
 def extract_data(data, num_moves):
 	# whether or not to augment training data
 	if(augment_data):
@@ -161,14 +179,14 @@ def extract_data(data, num_moves):
 			twos_layer = cur_board == 2
 			legal_moves_layer = get_legal_plane(cur_board, last_move)
 			ones_open, twos_open, ones_almost, twos_almost = get_rows(cur_board)
-
+			send_to_board = get_open_board(cur_board)
 
 			if i % 2 == 0:
 				features_data = np.array([zeros_layer, ones_layer, twos_layer, legal_moves_layer,
-					ones_open, twos_open, ones_almost, twos_almost])
+					ones_open, twos_open, ones_almost, twos_almost, send_to_board])
 			else:
 				features_data = np.array([zeros_layer, twos_layer, ones_layer, legal_moves_layer,
-					twos_open, ones_open, twos_almost, ones_almost])
+					twos_open, ones_open, twos_almost, ones_almost, send_to_board])
 
 			if augment_data:
 				for i in range(4):

@@ -8,27 +8,35 @@ import sys
 # TODO: use flags instead
 input_file_name = '../data/processed_games.mat'
 initial_learning_rate = .1
-num_steps = 10001
+num_steps = 0
 
-BATCH_SIZE = 8192
+BATCH_SIZE = 4096
 IMAGE_SIZE = 9
-NUM_CHANNELS = 8
+NUM_CHANNELS = 9
 EVAL_FREQUENCY = 10
 NUM_LABELS = 81
 SAVE_FREQUENCY = 1000
 
 def error_rate(predictions, labels):
  	"""Return the error rate based on dense predictions and sparse labels."""
- 	return 100.0 - (
-		100.0 *
-		np.sum(np.argmax(predictions, 1) == labels) /
-		predictions.shape[0])
+ 	data = []
+ 	correct = 0.0
+ 	sorted_predictions = np.argsort(predictions)
+ 	for i in range(10):
+ 		correct += np.sum(sorted_predictions[:, -1-i] == labels)
+ 		data.append(100.0 - (100.0 * (correct / predictions.shape[0])))
+ 	return tuple(data)
 
 def get_data(input_file_name):
 	# load data
 	input_data = loadmat(input_file_name)
 	data = np.array(input_data['features'], dtype=np.bool)
 	labels = input_data['labels']
+
+	# add 2 feature planes, one with zeros, one with ones
+	# zeros = np.zeros((data.shape[0], 1, IMAGE_SIZE, IMAGE_SIZE), dtype=np.bool)
+	# ones = np.ones((data.shape[0], 1, IMAGE_SIZE, IMAGE_SIZE), dtype=np.bool)
+	# data = np.concatenate((data, zeros, ones), axis=1)
 
 	# flatten data
 	data = np.reshape(data, (data.shape[0], (data.shape[1] * data.shape[2] * data.shape[3])))
@@ -127,8 +135,8 @@ def main():
 	with tf.Session() as sess:
 		# Run all the initializers to prepare the trainable parameters.
 		tf.initialize_all_variables().run()
-		#saver.restore(sess, "./trained_model/model.ckpt")
-		#print('Initialized!')		
+		saver.restore(sess, "./linear_model5/model_20000.ckpt")
+		print('Initialized!')		
     	# Loop through training steps.
 		for step in xrange(num_steps):
 			# Compute the offset of the current minibatch in the data.
@@ -151,17 +159,17 @@ def main():
 					(step, float(step) * BATCH_SIZE / train_size,
 					1000 * elapsed_time / EVAL_FREQUENCY))
 				print('Minibatch loss: %.3f, learning rate: %.6f' % (l, lr))
-				print('Minibatch error: %.1f%%' % error_rate(predictions, batch_labels))
-				print('Validation error: %.1f%%' % error_rate(
+				print('Minibatch error: %.1f, %.1f, %.1f, %.1f, %.1f, %.1f, %.1f, %.1f, %.1f, %.1f, %%' % error_rate(predictions, batch_labels))
+				print('Validation error: %.1f, %.1f, %.1f, %.1f, %.1f, %.1f, %.1f, %.1f, %.1f, %.1f, %%' % error_rate(
 					eval_in_batches(validation_data, sess), validation_labels))
 				sys.stdout.flush()
 
 			if step % SAVE_FREQUENCY == 0:
-				save_path = saver.save(sess, "./linear_model2/model_{}.ckpt".format(step))
+				save_path = saver.save(sess, "./linear_model5/model_{}.ckpt".format(step))
 				print("Model saved in file: %s" % save_path)
 		# Finally print the result!
 		test_error = error_rate(eval_in_batches(test_data, sess), test_labels)
-		print('Test error: %.1f%%' % test_error)
+		print('Test error: %.1f, %.1f, %.1f, %.1f, %.1f, %.1f, %.1f, %.1f, %.1f, %.1f, %%' % test_error)
 
 
 if __name__ == '__main__':
