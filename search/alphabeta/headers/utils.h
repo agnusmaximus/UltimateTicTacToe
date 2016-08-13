@@ -197,16 +197,228 @@ void PrintBoard(State &s) {
     }
 }
 
+// for finding horizontal, vertical, diagonal lines
+static int lines_y[8][3] = {{0, 0, 0}, {1, 1, 1}, {2, 2, 2},
+                    {0, 1, 2}, {0, 1, 2}, {0, 1, 2},
+                    {0, 1, 2}, {2, 1, 0}};
+static int lines_x[8][3] = {{0, 1, 2}, {0, 1, 2}, {0, 1, 2},
+                    {0, 0, 0}, {1, 1, 1}, {2, 2, 2},
+                    {0, 1, 2}, {0, 1, 2}}; 
+
+// Get open boards for feature planes 3-8
+void GetOpenBoards(State &s, bool* open_boards){
+    // for each board
+    for(int board_y = 0; board_y < 3; ++board_y){
+        for(int board_x = 0; board_x < 3; ++board_x){
+            // check if all spaces are filled
+            int num_spaces = 0;
+            for(int y = board_y * 3; y < (board_y + 1) * 3; ++y){
+                for(int x = board_x * 3; x < (board_x + 1) + 3; ++x){
+                    if(s.board[y * 9 + x] != 0){
+                        num_spaces ++;
+                    }
+                }
+            }
+            if(num_spaces == 9){
+                open_boards[board_y * 3 + board_x] = false;
+                continue;
+            }
+            // check if someone won the board
+            for(int line_num = 0; line_num < 8; ++line_num){
+                    int y0 = board_y * 3 + lines_y[line_num][0];
+                    int x0 = board_x * 3 + lines_x[line_num][0];
+                    int y1 = board_y * 3 + lines_y[line_num][1];
+                    int x1 = board_x * 3 + lines_x[line_num][1];
+                    int y2 = board_y * 3 + lines_y[line_num][2];
+                    int x2 = board_x * 3 + lines_x[line_num][2];
+                    if(s.board[y0 * 9 + x0] != 0 &&
+                        s.board[y0 * 9 + x0] == s.board[y1 * 9 + x1] &&
+                        s.board[y1 * 9 + x1] == s.board[y2 * 9 + x2]){
+                        open_boards[board_y * 3 + board_x] = false;
+                        break;
+                    }
+            }
+        }
+    }
+}
+
+// Get legal move plane
+void GetLegalMoves(State& s, bool* open_boards, bool* legal_moves){
+    for(int y = 0; y < 9; ++y){
+        for(int x = y * 9; x < (y + 1) * 9; ++x){
+            int index = y * 9 + x;
+            legal_moves[index] = s.board[index] == 0 && open_boards[(y / 3) * 3 + (x / 3)];
+        }
+    }
+}
+
+// for feature planes 4-7
+void GetLineStats(State& s, bool* open_boards, bool* ones_open,
+    bool* twos_open, bool* ones_almost, bool* twos_almost){
+    // for each board
+    for(int board_y = 0; board_y < 3; ++board_y){
+        for(int board_x = 0; board_x < 3; ++board_x){
+            // if board closed, no open spaces
+            if(!open_boards[board_y * 3 + board_x]){
+                for(int y = board_y * 3; y < (board_y + 1) * 3; ++y){
+                    for(int x = board_x * 3; x < (board_x + 1) * 3; ++x){
+                        ones_open[y * 9 + x] = false;
+                        twos_open[y * 9 + x] = false;
+                    }
+                }
+                continue;
+            }
+
+            // for each line of 3, count number of 1s/2s and process
+            for(int line_num = 0; line_num < 8; ++line_num){
+                int ones_count = 0;
+                int twos_count = 0;
+                // count 1s, 2s
+                for(int line_el = 0; line_el < 3; ++line_el){
+                    int y = board_y * 3 + lines_y[line_num][line_el];
+                    int x = board_x * 3 + lines_x[line_num][line_el];
+                    if(s.board[y * 9 + x] == 1){
+                        ones_count++;
+                    } else if(s.board[y * 9 + x == 2]){
+                        twos_count ++;
+                    }
+                }
+                // assign based off of counts
+                for(int line_el = 0; line_el < 3; ++line_el){
+                    int y = board_y * 3 + lines_y[line_num][line_el];
+                    int x = board_x * 3 + lines_x[line_num][line_el];
+                    if(twos_count > 0){
+                        ones_open[y * 9 + x] = false;
+                    }
+                    if(ones_count > 0){
+                        twos_open[y * 9 + x] = false;
+                    }
+                    if(ones_count == 2 && twos_count == 0){
+                        ones_almost[y * 9 + x] = true;
+                    } else if(twos_count == 2 && ones_count == 0){
+                        twos_almost[y * 9 + x] = true;
+                    }
+                }
+            }
+        }
+    }
+}
+
+// get feture plane 8, sending to board
+void GetSendBoard(State& s, bool* open_boards, bool*send_to_board){
+    // for each board
+    for(int board_y = 0; board_y < 3; ++board_y){
+        for(int board_x = 0; board_x < 3; ++board_x){
+            // if sends to closed board, should be false
+            for(int y = board_y * 3; y < (board_y + 1) * 3; ++y){
+                for(int x = board_x * 3; x < (board_x + 1) * 3; ++x){
+                    send_to_board[y * 9 + x] = open_boards[board_y * 3 + board_x];
+                }
+            }
+        }
+    }
+}
+
+
+void AssignFeatureVector(bool* feature_vector, bool* feature, int offset){
+    for(int i = 0; i < 81; ++i){
+        feature_vector[offset + i] = feature[i];
+    }
+}
+
 // Updates the linear ml model for the state
 void UpdateMovePredictor(State &s){
-    // copy bias variable
+    // copy bias variable (now s.move_predictor = b)
     for(int i = 0; i < 81; ++i){
         s.move_predictor[i] = bias[i];
     }
 
-    // feature plane 1, all 0s
+    bool feature_vector[729] = {0};
+
+    // plane 0, all 0s
+    int offset = 0;
     for(int i = 0; i < 81; ++i){
-        s.move_predictor[i] = bias[i];
+        if(s.board[i] == 0){
+            feature_vector[offset + i] = true;
+        }
+    }
+
+    // plane 1, current player
+    offset = 81;
+    for(int i = 0; i < 81; ++i){
+        if(s.board[i] != 0 && s.board[i] == s.cur_player){
+            feature_vector[offset + i] = true;
+        }
+    }
+
+    // plane 2, not current player
+    offset = 81 * 2;
+    for(int i = 0; i < 81; ++i){
+        if(s.board[i] != 0 && s.board[i] != s.cur_player){
+            feature_vector[offset + i] = true;
+        }
+    }
+
+    // open boards for planes 3-8, length 9
+    bool open_boards[9] = {true};
+    GetOpenBoards(s, open_boards);
+
+    // feature plane 3, legal move plane
+    bool legal_moves[81];
+    GetLegalMoves(s, open_boards, legal_moves);
+    offset = 81 * 3;
+    for(int i = 0; i < 81; ++i){
+        feature_vector[offset + i] = legal_moves[i];
+    }
+
+    // feature planes 4-5, whether or not it is possible to complete row of 3s
+    bool ones_open[81] = {1};
+    bool twos_open[81] = {1};
+    // feature planes 6-7, whether or can complete row of 3s this turn
+    bool ones_almost[81] = {0};
+    bool twos_almost[81] = {0};
+    GetLineStats(s, open_boards, ones_open, twos_open, ones_almost, twos_almost);
+
+    if(s.cur_player == 1){
+        offset = 81 * 4;
+    } else{
+        offset = 81 * 5;
+    }
+    AssignFeatureVector(feature_vector, ones_open, offset);
+
+    if(s.cur_player == 1){
+        offset = 81 * 5;
+    } else{
+        offset = 81 * 4;
+    }
+    AssignFeatureVector(feature_vector, twos_open, offset);
+
+    if(s.cur_player == 1){
+        offset = 81 * 6;
+    } else{
+        offset = 81 * 7;
+    }
+    AssignFeatureVector(feature_vector, ones_almost, offset);
+
+    if(s.cur_player == 1){
+        offset = 81 * 7;
+    } else{
+        offset = 81 * 6;
+    }
+    AssignFeatureVector(feature_vector, twos_almost, offset);
+
+    // feature plane 8, whether this move will send opponent to open board or not
+    bool send_to_board[81];
+    GetSendBoard(s, open_boards, send_to_board);
+    AssignFeatureVector(feature_vector, send_to_board, 81*8);
+
+    // do multiplication (now s.move_predictor = Ax+b)
+    for(int i = 0; i < 729; ++i){
+        if(feature_vector[i]){
+            for(int j = 0; j < 81; ++j){
+                s.move_predictor[j] += weights[i][j];
+            }
+        }
     }
 }
 
@@ -429,6 +641,8 @@ void PerformMove(State &s, const Move &m) {
     }
     s.moves.push_back(m);
     s.cur_player = Other(s.cur_player);
+
+    // for ml model
     UpdateMovePredictor(s);
 }
 
@@ -451,6 +665,8 @@ void UndoMove(State &s, const Move &m) {
     s.cur_player = Other(s.cur_player);
     s.moves.pop_back();
     s.did_win_overall = false;
+
+    // for ml model
     UpdateMovePredictor(s);
 }
 
@@ -460,31 +676,8 @@ void AddScore(State &s, Move &m, int value) {
 
 struct MoveSort {
 MoveSort(const State &state) : s(state) {}
-
-    bool DoesGiveFreePlacement(const Move &m) {
-	int target_x = m.x%3;
-	int target_y = m.y%3;
-	return s.results_board[target_x*BOARD_DIM/3+target_y] != EMPTY;
-    }
-
-    bool RestrictScore(const Move &m) {
-	int target_x = m.x%3;
-	int target_y = m.y%3;
-	return s.n_pieces_in_subgrid[target_x*BOARD_DIM/3+target_y];
-    }
-
     bool operator() (const Move& m1, const Move& m2) {
-	if (DoesGiveFreePlacement(m1)) return false;
-	if (DoesGiveFreePlacement(m2)) return true;
-	int r1score = RestrictScore(m1);
-	int r2score = RestrictScore(m2);
-	if (r1score < 6 && r2score < 6) {
-	    return s.history[m1.x][m1.y][m1.who-1] >
-		s.history[m2.x][m2.y][m2.who-1];
-	}
-	if (r1score > r2score) return true;
-	if (r1score <= r2score) return false;
-	return false;
+        return s.move_predictor[m1.y * 9 + m1.x] > s.move_predictor[m2.y * 9 + m2.x];
     }
     const State &s;
 };
