@@ -326,7 +326,8 @@ void AssignFeatureVector(bool* feature_vector, bool* feature, int offset){
     }
 }
 
-// Updates the linear ml model for the state
+// Updates the linear ml model for the state.
+// TODO: only process changes, don't recalculate the whole thing
 void UpdateMovePredictor(State &s){
     // copy bias variable (now s.move_predictor = b)
     for(int i = 0; i < 81; ++i){
