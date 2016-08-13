@@ -12,6 +12,8 @@
 #include <unordered_map>
 #include <vector>
 
+#include "constants.h"
+
 #define DEBUG 0
 
 #define BOARD_DIM 9
@@ -73,6 +75,9 @@ struct State {
     float score[2];
     float weights[N_EVAL_WEIGHTS];
     vector<float> movescores;
+
+    // For ml model
+    float move_predictor[81];
 };
 typedef struct State State;
 
@@ -189,6 +194,19 @@ void PrintBoard(State &s) {
 	    cerr << (int)s.results_board[i*BOARD_DIM/3+j];
 	}
 	cerr << endl;
+    }
+}
+
+// Updates the linear ml model for the state
+void UpdateMovePredictor(State &s){
+    // copy bias variable
+    for(int i = 0; i < 81; ++i){
+        s.move_predictor[i] = bias[i];
+    }
+
+    // feature plane 1, all 0s
+    for(int i = 0; i < 81; ++i){
+        s.move_predictor[i] = bias[i];
     }
 }
 
@@ -411,6 +429,7 @@ void PerformMove(State &s, const Move &m) {
     }
     s.moves.push_back(m);
     s.cur_player = Other(s.cur_player);
+    UpdateMovePredictor(s);
 }
 
 void UndoMove(State &s, const Move &m) {
@@ -432,6 +451,7 @@ void UndoMove(State &s, const Move &m) {
     s.cur_player = Other(s.cur_player);
     s.moves.pop_back();
     s.did_win_overall = false;
+    UpdateMovePredictor(s);
 }
 
 void AddScore(State &s, Move &m, int value) {

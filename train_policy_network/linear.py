@@ -1,6 +1,6 @@
 # linear model that trains prediction of moves
 import tensorflow as tf
-from scipy.io import loadmat
+from scipy.io import loadmat, savemat
 import time
 import numpy as np
 import sys
@@ -8,7 +8,7 @@ import sys
 # TODO: use flags instead
 input_file_name = '../data/processed_games.mat'
 initial_learning_rate = .1
-num_steps = 0
+num_steps = 1
 
 BATCH_SIZE = 4096
 IMAGE_SIZE = 9
@@ -164,9 +164,17 @@ def main():
 					eval_in_batches(validation_data, sess), validation_labels))
 				sys.stdout.flush()
 
-			if step % SAVE_FREQUENCY == 0:
+			if step % SAVE_FREQUENCY == 0 and False:
 				save_path = saver.save(sess, "./linear_model5/model_{}.ckpt".format(step))
 				print("Model saved in file: %s" % save_path)
+
+
+			# get the weights/bias for last step
+			if step == num_steps - 1:
+				data = sess.run([weights, bias], feed_dict=feed_dict)
+				key_dict = {'weights': data[0], 'bias': data[1]}
+				savemat('./linear_model5/data.mat', key_dict)
+
 		# Finally print the result!
 		test_error = error_rate(eval_in_batches(test_data, sess), test_labels)
 		print('Test error: %.1f, %.1f, %.1f, %.1f, %.1f, %.1f, %.1f, %.1f, %.1f, %.1f, %%' % test_error)
