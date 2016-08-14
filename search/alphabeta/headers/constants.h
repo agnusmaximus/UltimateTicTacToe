@@ -1,4 +1,4 @@
-// Where I'm storing ml model constants. 
+// Various constants shared across multiple files
 
 // weights for linear ml model
 float weights[729][81] = {
