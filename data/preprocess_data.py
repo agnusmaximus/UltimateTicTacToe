@@ -207,14 +207,16 @@ def preprocess():
     print("Number of raw games: %d" % len(data))
     print("Number of raw distinct positions: %d" % count_distinct_positions(data))
     print("Rotating games to increase data size...")
-    data = add_flipped_games(data)
-    #data = add_rotated_games(data)
+    #data = add_flipped_games(data)
+    data = add_rotated_games(data)
     print("Number of total games: %d" % len(data))
     print("Number of total distinct positions: %d" % count_distinct_positions(data))
     preprocessed_data = []
     for i, game in enumerate(data):
-        if i % 5000 == 0:
+        if i % 500 == 0:
             print("%d games processed..." % i)
+            if i != 0:
+                break
         previous_move = -1
         for game_step in range(len(game["states"])):
             features, previous_move, label, does_win_or_draw = extract_features(game, game_step, previous_move)

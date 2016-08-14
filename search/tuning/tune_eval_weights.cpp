@@ -20,7 +20,7 @@ using namespace std;
 #define BASE_ELO_RATING 1400
 #define KILL_RATIO .20
 
-#define TUNE_DEPTH 2
+#define TUNE_DEPTH 30
 
 struct Individual {
     float weights[N_WEIGHTS];

@@ -44,7 +44,7 @@ eval_data = tf.placeholder(
     data_type(),
     shape=(EVAL_BATCH_SIZE, IMAGE_SIZE, IMAGE_SIZE, NUM_CHANNELS))
 
-first_conv = tf.Variable(tf.truncated_normal([3, 3, NUM_CHANNELS, FLAGS.K],
+"""first_conv = tf.Variable(tf.truncated_normal([3, 3, NUM_CHANNELS, FLAGS.K],
                                              stddev=.1, seed=SEED, dtype=data_type()))
 first_bias = tf.Variable(tf.zeros([FLAGS.K], dtype=data_type()))
 conv_weights = []
@@ -58,12 +58,14 @@ for i in range(pipeline_length):
   conv_weights.append(conv_weight)
   conv_biases.append(conv_bias)
 final_conv_weight = tf.Variable(tf.truncated_normal([3, 3, FLAGS.K, 1],
-                                                    stddev=0.1, seed=SEED, dtype=data_type()))
+                                                    stddev=0.1, seed=SEED, dtype=data_type()))"""
+multiplication_layer = tf.Variable(tf.zeros([4*9*9, 81]))
+bias_layer = tf.Variable(tf.zeros([81]))
 
 # We will replicate the model structure for the training subgraph, as well
 # as the evaluation subgraphs, while sharing the trainable parameters.
 def model(data, train=False):
-    conv, relu = None, None
+    """conv, relu = None, None
     conv = tf.nn.conv2d(data, first_conv, strides=[1,1,1,1], padding="SAME")
     relu = tf.nn.relu(tf.nn.bias_add(conv, first_bias))
     #relu = tf.pad(relu, [[0,0],[3,3],[3,3],[0,0]], "CONSTANT")
@@ -73,8 +75,9 @@ def model(data, train=False):
         #relu = tf.pad(relu, [[0,0],[3,3],[3,3],[0,0]], "CONSTANT")
         final_conv = tf.nn.conv2d(relu, final_conv_weight, strides=[1,1,1,1], padding="SAME")
     shape = final_conv.get_shape().as_list()
-    return tf.reshape(final_conv, [shape[0], shape[1]*shape[2]*shape[3]])
-  #return reshape
+    return tf.reshape(final_conv, [shape[0], shape[1]*shape[2]*shape[3]])"""
+    shape = data.get_shape().as_list()
+    return tf.matmul(tf.reshape(data, [shape[0], shape[1]*shape[2]*shape[3]]), multiplication_layer) + bias_layer
 
 eval_prediction = tf.nn.softmax(model(eval_data))
 
@@ -85,6 +88,7 @@ def get_data():
   f.close()
 
   # Be sure to shuffle.
+  numpy.random.seed(42)
   numpy.random.shuffle(raw_data)
   train_data = numpy.array([x[0] for x in raw_data])
   label_data = numpy.array([x[1] for x in raw_data])
@@ -131,6 +135,6 @@ with tf.Session() as sess:
     saver.restore(sess, FLAGS.model_file)
     print("Initialized!")
     test_data, label_data = get_data()
-    for i in range(1, 5):
+    for i in range(1, 7):
         overall_error = error_rate(eval_in_batches(test_data, sess), label_data, i)
         print("Overall error considering top %d predicted moves : %f"  % (i, overall_error))

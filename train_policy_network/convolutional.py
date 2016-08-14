@@ -22,7 +22,7 @@ NUM_LABELS = 81
 VALIDATION_SIZE = 1000  # Size of the validation set.
 SEED = None  # Set to None for random seed.
 BATCH_SIZE = 64
-NUM_EPOCHS = 10
+NUM_EPOCHS = 100
 EVAL_BATCH_SIZE = 64
 EVAL_FREQUENCY = 100  # Number of steps between evaluations.
 SAVE_FREQUENCY = 1000
@@ -51,6 +51,7 @@ def get_data():
   f.close()
 
   # Be sure to shuffle.
+  numpy.random.seed(42);
   numpy.random.shuffle(raw_data)
   train_data = numpy.array([x[0] for x in raw_data])
   label_data = numpy.array([x[1] for x in raw_data])
@@ -94,7 +95,7 @@ def main(argv=None):  # pylint: disable=unused-argument
 
   pipeline_length = FLAGS.pipeline_length
 
-  first_conv = tf.Variable(tf.truncated_normal([3, 3, NUM_CHANNELS, FLAGS.K],
+  """first_conv = tf.Variable(tf.truncated_normal([3, 3, NUM_CHANNELS, FLAGS.K],
                                                stddev=.1, seed=SEED, dtype=data_type()))
   first_bias = tf.Variable(tf.zeros([FLAGS.K], dtype=data_type()))
 
@@ -108,13 +109,16 @@ def main(argv=None):  # pylint: disable=unused-argument
     conv_biases.append(conv_bias)
 
   final_conv_weight = tf.Variable(tf.truncated_normal([3, 3, FLAGS.K, 1],
-                                                      stddev=0.1, seed=SEED, dtype=data_type()))
+                                                      stddev=0.1, seed=SEED, dtype=data_type()))"""
+
+  multiplication_layer = tf.Variable(tf.zeros([4*9*9, 81]))
+  bias_layer = tf.Variable(tf.zeros([81]))
 
   # We will replicate the model structure for the training subgraph, as well
   # as the evaluation subgraphs, while sharing the trainable parameters.
   def model(data, train=False):
 
-    conv, relu = None, None
+    """conv, relu = None, None
     conv = tf.nn.conv2d(data, first_conv, strides=[1,1,1,1], padding="SAME")
     relu = tf.nn.relu(tf.nn.bias_add(conv, first_bias))
     #relu = tf.pad(relu, [[0,0],[3,3],[3,3],[0,0]], "CONSTANT")
@@ -125,7 +129,10 @@ def main(argv=None):  # pylint: disable=unused-argument
     final_conv = tf.nn.conv2d(relu, final_conv_weight, strides=[1,1,1,1], padding="SAME")
     shape = final_conv.get_shape().as_list()
     return tf.reshape(final_conv, [shape[0], shape[1]*shape[2]*shape[3]])
-    #return reshape
+    #return reshape"""
+    shape = data.get_shape().as_list()
+    return tf.matmul(tf.reshape(data, [shape[0], shape[1]*shape[2]*shape[3]]), multiplication_layer) + bias_layer
+
 
   # Training computation: logits + cross-entropy loss.
   logits = model(train_data_node, True)
@@ -185,7 +192,7 @@ def main(argv=None):  # pylint: disable=unused-argument
   with tf.Session() as sess:
     # Run all the initializers to prepare the trainable parameters.
     tf.initialize_all_variables().run()
-    saver.restore(sess, "./trained_model/model.ckpt")
+    #saver.restore(sess, "./trained_model/model.ckpt")
     print('Initialized!')
     # Loop through training steps.
     for step in xrange(int(num_epochs * train_size) // BATCH_SIZE):
