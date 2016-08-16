@@ -15,7 +15,7 @@ augment_data = True
 # whether or not to shuffle the data
 shuffle_data = True
 BOARD_DIM = 9
-NUM_FEATURES = 9
+NUM_FEATURES = 8
 
 # finds out which subboards is it possible to move in.
 # returns 3x3 np array of bools
@@ -127,14 +127,14 @@ def transpose_move(move):
 def reverse_rows_move(move):
 	return (move[0], 8-move[1])
 
-# extracts features into numpy array. Dimensions are:
-# (num moves x num feature planes x board size)
-# feature planes are (total of 9):
+# extracts features, labels, and the legal moves plane into numpy arrays.
+# feature planes are (total of 8):
 # 	Plane of 0s, 1s, 2s (3 planes)
 # 	Plane of possible response moves (1 plane)
 #	Plane where it is possible to complete a row of 3 for 1s, 2s (2 planes)
 #	Plane where if moved here can complete a row of 3 for 1s, 2s (2 planes)
 #	Plane where this will send the opponent to a specific board vs. open board (1 plane)
+
 def extract_data(data, num_moves):
 	# whether or not to augment training data
 	if(augment_data):
@@ -142,6 +142,7 @@ def extract_data(data, num_moves):
 	# pre-alloc memory, makes it run much faster
 	features = np.zeros((num_moves, NUM_FEATURES, BOARD_DIM, BOARD_DIM), dtype=np.bool)
 	labels = np.zeros((num_moves, 2), dtype=np.uint8)
+	legal_moves = np.zeros((num_moves, BOARD_DIM, BOARD_DIM), dtype=np.bool)
 
 	# which index to write features and labels to
 	move_index = 0
@@ -182,10 +183,10 @@ def extract_data(data, num_moves):
 			send_to_board = get_open_board(cur_board)
 
 			if i % 2 == 0:
-				features_data = np.array([zeros_layer, ones_layer, twos_layer, legal_moves_layer,
+				features_data = np.array([zeros_layer, ones_layer, twos_layer,
 					ones_open, twos_open, ones_almost, twos_almost, send_to_board])
 			else:
-				features_data = np.array([zeros_layer, twos_layer, ones_layer, legal_moves_layer,
+				features_data = np.array([zeros_layer, twos_layer, ones_layer,
 					twos_open, ones_open, twos_almost, ones_almost, send_to_board])
 
 			if augment_data:
@@ -196,6 +197,8 @@ def extract_data(data, num_moves):
 					features[move_index] = features_data
 					cur_move = transpose_move(cur_move)
 					labels[move_index] = cur_move
+					legal_moves_layer = legal_moves_layer.T
+					legal_moves[move_index] = legal_moves_layer
 					move_index += 1
 
 					# reverse rows
@@ -203,29 +206,34 @@ def extract_data(data, num_moves):
 					features[move_index] = features_data
 					cur_move = reverse_rows_move(cur_move)
 					labels[move_index] = cur_move
+					legal_moves_layer = legal_moves_layer[::-1]
+					legal_moves[move_index] = legal_moves_layer
 					move_index += 1
 			else:
 				features[move_index] = features_data
 				labels[move_index] = cur_move
+				legal_moves[move_index] = legal_moves_layer
 				move_index += 1
 			if move_index % 10000 == 0:
 				print move_index
-	return features, labels
+	return features, labels, legal_moves
 
-def shuffle(features, labels):
+def shuffle(features, labels, legal_moves):
 	shuffled_features = np.zeros(features.shape, features.dtype)
 	shuffled_labels = np.zeros(labels.shape, labels.dtype)
+	shuffled_legal_moves = np.zeros(legal_moves.shape, legal_moves.dtype)
 	indices = [i for i in range(features.shape[0])]
 	random.shuffle(indices)
 
 	for i, index in enumerate(indices):
 		shuffled_features[i] = features[index]
 		shuffled_labels[i] = labels[index]
+		shuffled_legal_moves[i] = legal_moves[index]
 
-	return shuffled_features, shuffled_labels
+	return shuffled_features, shuffled_labels, shuffled_legal_moves
 
-def save_data(features, labels):
-	file_dict = {'features': features, 'labels': labels}
+def save_data(features, labels, legal_moves):
+	file_dict = {'features': features, 'labels': labels, 'legal_moves': legal_moves}
 	savemat(output_file_name, file_dict)
 
 def main():
@@ -238,7 +246,7 @@ def main():
 		# no winner
 		if game['settings']['winnerplayer'] == 'none':
 			continue
-		# the winning player went first and odd number of games
+		# the winning player went first and odd number of moves
 		elif (game['settings']['winnerplayer'] == game['settings']['players']['names'][0] and
 			moves % 2 == 1):
 			num_moves[i] = (moves / 2) + 1
@@ -247,12 +255,12 @@ def main():
 	num_moves = sum(num_moves)
 	print 'games found: %s\nnum_moves: %s' % (len(data), num_moves)
 
-	features, labels = extract_data(data, num_moves)
+	features, labels, legal_moves = extract_data(data, num_moves)
 	print 'extracted data: %fs' % (time.time() - t0)
 	if shuffle_data:
-		features, labels = shuffle(features, labels)
+		features, labels, legal_moves = shuffle(features, labels, legal_moves)
 		print 'shuffled data: %fs' % (time.time() - t0)
-	save_data(features, labels)
+	save_data(features, labels, legal_moves)
 	print 'saved data: %fs' % (time.time() - t0)
 
 if __name__ == '__main__':

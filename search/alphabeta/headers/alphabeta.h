@@ -12,7 +12,7 @@
 using namespace std;
 
 // for alphabeta search, pick top TOP_K_MOVES most likely moves
-static const int TOP_K_MOVES = 4;
+static const int TOP_K_MOVES = 81;
 static int nodes_searched = 0;
 static int n_leaf_nodes = 0;
 

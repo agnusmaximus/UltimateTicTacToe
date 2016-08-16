@@ -7,12 +7,13 @@ import sys
 
 # TODO: use flags instead
 input_file_name = '../data/processed_games.mat'
+save_file_dir = './linear_model6'
 initial_learning_rate = .1
 num_steps = 1
 
 BATCH_SIZE = 4096
 IMAGE_SIZE = 9
-NUM_CHANNELS = 9
+NUM_CHANNELS = 8
 EVAL_FREQUENCY = 10
 NUM_LABELS = 81
 SAVE_FREQUENCY = 1000
@@ -32,6 +33,7 @@ def get_data(input_file_name):
 	input_data = loadmat(input_file_name)
 	data = np.array(input_data['features'], dtype=np.bool)
 	labels = input_data['labels']
+	legal_moves = input_data['legal_moves']
 
 	# add 2 feature planes, one with zeros, one with ones
 	# zeros = np.zeros((data.shape[0], 1, IMAGE_SIZE, IMAGE_SIZE), dtype=np.bool)
@@ -57,16 +59,22 @@ def get_data(input_file_name):
 
 	train_data = data[:split]
 	train_labels = labels[:split]
+	train_legal_moves = legal_moves[:split]
 	validation_data = data[split:split2]
 	validation_labels = labels[split:split2]
+	validation_legal_moves = legal_moves[split:split2]
 	test_data = data[split2:]
 	test_labels = labels[split2:]
+	test_legal_moves = legal_moves[split2:]
 
-	return (train_data, train_labels, validation_data, validation_labels, test_data, test_labels)
+	return (train_data, train_labels, train_legal_moves,
+		validation_data, validation_labels, validation_legal_moves,
+		test_data, test_labels, test_legal_moves)
 
 def main():
-	data = get_data(input_file_name)
-	train_data, train_labels, validation_data, validation_labels, test_data, test_labels = data
+	(train_data, train_labels, train_legal_moves,
+		validation_data, validation_labels, validation_legal_moves,
+		test_data, test_labels, test_legal_moves) = get_data(input_file_name)
 	train_size = train_data.shape[0]
 
 	# the model
@@ -78,7 +86,6 @@ def main():
 		tf.float32,
 		shape=(BATCH_SIZE, IMAGE_SIZE * IMAGE_SIZE * NUM_CHANNELS))
 	# define the weights so I can print them later.
-	# TODO: figure out how to print weights from tf.contrib.layers
 	weights = tf.Variable(tf.truncated_normal([IMAGE_SIZE * IMAGE_SIZE * NUM_CHANNELS, NUM_LABELS],
 		stddev=0.1, dtype=tf.float32))
 	bias = tf.Variable(tf.truncated_normal([NUM_LABELS,],
@@ -86,6 +93,14 @@ def main():
 
 	# get logits layer
 	logits = tf.nn.bias_add(tf.matmul(train_data_node, weights), bias)
+	# filter this by legal moves, lazy way is to just subtract a ton from logits layer
+	legal_moves_node = tf.placeholder(
+		tf.float32,
+		shape=(BATCH_SIZE, IMAGE_SIZE * IMAGE_SIZE))
+	# map {0, 1} -> {-100, 0}
+	legal_moves_filter = tf.nn.math_ops.mul(tf.nn.math_ops.sub(legal_moves_node, 1), 100)
+	logits = tf.nn.math_ops.add(logits, legal_moves_filter)
+
 	# cross entropy error
 	loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(
 			logits, train_labels_node))
@@ -135,7 +150,7 @@ def main():
 	with tf.Session() as sess:
 		# Run all the initializers to prepare the trainable parameters.
 		tf.initialize_all_variables().run()
-		saver.restore(sess, "./linear_model5/model_20000.ckpt")
+		#saver.restore(sess, "./linear_model5/model_20000.ckpt")
 		print('Initialized!')		
     	# Loop through training steps.
 		for step in xrange(num_steps):
@@ -165,7 +180,7 @@ def main():
 				sys.stdout.flush()
 
 			if step % SAVE_FREQUENCY == 0 and False:
-				save_path = saver.save(sess, "./linear_model5/model_{}.ckpt".format(step))
+				save_path = saver.save(sess, "{}/model_{}.ckpt".format(save_file_dir, step))
 				print("Model saved in file: %s" % save_path)
 
 
@@ -173,7 +188,7 @@ def main():
 			if step == num_steps - 1:
 				data = sess.run([weights, bias], feed_dict=feed_dict)
 				key_dict = {'weights': data[0], 'bias': data[1]}
-				savemat('./linear_model5/data.mat', key_dict)
+				savemat('{}/data.mat'.format(save_file_dir), key_dict)
 
 		# Finally print the result!
 		test_error = error_rate(eval_in_batches(test_data, sess), test_labels)
