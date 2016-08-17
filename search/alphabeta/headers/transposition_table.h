@@ -12,7 +12,8 @@ using namespace std;
 
 struct TTEntry {
   Move m;
-  int value, depth;
+  float value;
+  int depth;
   short type;
 };
 
@@ -33,7 +34,7 @@ bool GetTranspositionTableEntry(State &s, TTEntry **entry) {
 }
 
 
-void AddTranspositionTableEntry(State &s, Move &bestmove, int alpha, int beta, int value, int depth) {
+void AddTranspositionTableEntry(State &s, Move &bestmove, float alpha, float beta, float value, int depth) {
     TTEntry entry = {bestmove, value, depth, 0};
     entry = {bestmove, value, depth, 0};
     if (value <= alpha) {

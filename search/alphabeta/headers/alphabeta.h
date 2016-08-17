@@ -14,11 +14,11 @@ using namespace std;
 static int nodes_searched = 0;
 static int n_leaf_nodes = 0;
 
-int evaluate(State &s) {
+float evaluate(State &s) {
     return s.score[s.cur_player-1] - s.score[Other(s.cur_player)-1];
 }
 
-int alphabeta(State &s, int depth, int a, int b, Move &choose, int top_level, int start_time) {
+float alphabeta(State &s, int depth, float a, float b, Move &choose, int top_level, int start_time) {
 
     if (s.did_win_overall) {
 	return MIN_VALUE / (top_level-depth+1);
@@ -48,8 +48,8 @@ int alphabeta(State &s, int depth, int a, int b, Move &choose, int top_level, in
     }
     nodes_searched += 1;
 
-    int alpha_original = a, beta_original = b;
-    int best_score = MIN_VALUE;
+    float alpha_original = a, beta_original = b;
+    float best_score = MIN_VALUE;
     Move moves[81];
     Move bestmove = {EMPTY,EMPTY,EMPTY};
     int n_moves_generated = GenerateValidMoves(s, moves);
@@ -58,7 +58,7 @@ int alphabeta(State &s, int depth, int a, int b, Move &choose, int top_level, in
     for (int i = 0; i < n_moves_generated; i++) {
 	Move &move = moves[i];
 	PerformMove(s, move);
-	int subscore = -alphabeta(s, depth-1, -b, -a, choose, top_level, start_time);
+	float subscore = -alphabeta(s, depth-1, -b, -a, choose, top_level, start_time);
 	if (subscore > best_score) {
 	    best_score = subscore;
 	    bestmove = move;
@@ -85,8 +85,9 @@ int iterative_deepening(State &s, int depth, Move *move, bool verbose=true) {
     ResetTranspositionTable();
     auto start_start_time = GetTimeMs();
 
-    int will_win = false, i, score = 0;
-    int previous_score = 0;
+    int will_win = false, i;
+    float score = 0;
+    float previous_score = 0;
     Move movecopy;
     for (i = 1; i <= depth; i++) {
 	n_leaf_nodes = 0;
@@ -105,7 +106,7 @@ int iterative_deepening(State &s, int depth, Move *move, bool verbose=true) {
     }
 
     if (verbose) {
-	fprintf(stderr, "Overall time %d ms, Score: %d\n", GetTimeMs()-start_start_time, score);
+	fprintf(stderr, "Overall time %d ms, Score: %f\n", GetTimeMs()-start_start_time, score);
 	fprintf(stderr, "Move: x-%d y-%d who-%d\n", move->x, move->y, (int)move->who);
 	fprintf(stderr, "%d leaf nodes at depth=%d\n", n_leaf_nodes, i-1);
     }

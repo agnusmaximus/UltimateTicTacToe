@@ -393,7 +393,7 @@ float ComputeMoveScore(const State &s, const Move &m) {
 }
 
 void PerformMove(State &s, const Move &m) {
-    int movescore = ComputeMoveScore(s, m);
+    float movescore = ComputeMoveScore(s, m);
     s.score[m.who-1] += movescore;
     s.movescores.push_back(movescore);
     SetBB(s, m);
@@ -416,7 +416,7 @@ void PerformMove(State &s, const Move &m) {
 }
 
 void UndoMove(State &s, const Move &m) {
-    int movescore = s.movescores[s.movescores.size()-1];
+    float movescore = s.movescores[s.movescores.size()-1];
     s.score[m.who-1] -= movescore;
     s.movescores.pop_back();
     SetBB(s, {m.x, m.y, EMPTY});
