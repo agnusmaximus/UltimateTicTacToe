@@ -9,12 +9,12 @@ import sys
 input_file_name = '../data/processed_games.mat'
 save_file_dir = './linear_model6'
 initial_learning_rate = .1
-num_steps = 1
+num_steps = 10000
 
 BATCH_SIZE = 4096
 IMAGE_SIZE = 9
 NUM_CHANNELS = 8
-EVAL_FREQUENCY = 10
+EVAL_FREQUENCY = 100
 NUM_LABELS = 81
 SAVE_FREQUENCY = 1000
 
@@ -41,16 +41,20 @@ def get_data(input_file_name):
 	# data = np.concatenate((data, zeros, ones), axis=1)
 
 	# flatten data
-	data = np.reshape(data, (data.shape[0], (data.shape[1] * data.shape[2] * data.shape[3])))
+	data = np.reshape(data, (data.shape[0], -1))
 
 	# map labels from (y, x) -> y*9 + x
-	labels[:, 1] *= 9
+	labels[:, 0] *= 9
 	labels = np.sum(labels, axis=1)
 	labels = np.array(labels, dtype=np.int64)
+
+	# flatten filter
+	legal_moves = np.reshape(legal_moves, (legal_moves.shape[0], -1))
 
 	# typecast data
 	data = np.array(data, dtype=np.float32)
 	labels = np.array(labels, dtype=np.int64)
+	legal_moves = np.array(legal_moves, dtype=np.float32)
 
 	# 98/1/1 split for train/validation/test data
 	data_len = data.shape[0]
@@ -87,18 +91,19 @@ def main():
 		shape=(BATCH_SIZE, IMAGE_SIZE * IMAGE_SIZE * NUM_CHANNELS))
 	# define the weights so I can print them later.
 	weights = tf.Variable(tf.truncated_normal([IMAGE_SIZE * IMAGE_SIZE * NUM_CHANNELS, NUM_LABELS],
-		stddev=0.1, dtype=tf.float32))
+		stddev=0.01, dtype=tf.float32))
 	bias = tf.Variable(tf.truncated_normal([NUM_LABELS,],
-		stddev=0.1, dtype=tf.float32))
+		stddev=0.01, dtype=tf.float32))
 
 	# get logits layer
 	logits = tf.nn.bias_add(tf.matmul(train_data_node, weights), bias)
+
 	# filter this by legal moves, lazy way is to just subtract a ton from logits layer
 	legal_moves_node = tf.placeholder(
 		tf.float32,
 		shape=(BATCH_SIZE, IMAGE_SIZE * IMAGE_SIZE))
 	# map {0, 1} -> {-100, 0}
-	legal_moves_filter = tf.nn.math_ops.mul(tf.nn.math_ops.sub(legal_moves_node, 1), 100)
+	legal_moves_filter = tf.nn.math_ops.mul(tf.nn.math_ops.sub(legal_moves_node, 1), 1000)
 	logits = tf.nn.math_ops.add(logits, legal_moves_filter)
 
 	# cross entropy error
@@ -117,14 +122,16 @@ def main():
 
 	# get predictions
 	train_prediction = tf.nn.softmax(logits)
-	eval_prediction = tf.nn.softmax(tf.nn.bias_add(tf.matmul(eval_data, weights), bias))
+	# eval is softmax(Ax + b + filter)
+	eval_prediction = tf.nn.softmax(tf.nn.math_ops.add(
+		tf.nn.bias_add(tf.matmul(eval_data, weights), bias), legal_moves_filter))
 
  	saver = tf.train.Saver()
 
 	# Small utility function to evaluate a dataset by feeding batches of data to
 	# {eval_data} and pulling the results from {eval_predictions}.
 	# Saves memory and enables this to run on smaller GPUs.
-	def eval_in_batches(data, sess):
+	def eval_in_batches(data, filter_, sess):
 		"""Get all predictions for a dataset by running it in small batches."""
 		size = data.shape[0]
 		if size < BATCH_SIZE:
@@ -135,11 +142,11 @@ def main():
 			if end <= size:
 				predictions[begin:end, :] = sess.run(
 					eval_prediction,
-					feed_dict={eval_data: data[begin:end, ...]})
+					feed_dict={eval_data: data[begin:end, ...], legal_moves_node: filter_[begin:end, ...]})
 			else:
 				batch_predictions = sess.run(
 					eval_prediction,
-					feed_dict={eval_data: data[-BATCH_SIZE:, ...]})
+					feed_dict={eval_data: data[-BATCH_SIZE:, ...], legal_moves_node: filter_[-BATCH_SIZE:, ...]})
 				predictions[begin:, :] = batch_predictions[begin - size:, :]
 		return predictions
 
@@ -159,10 +166,12 @@ def main():
 			offset = (step * BATCH_SIZE) % (train_size - BATCH_SIZE)
 			batch_data = train_data[offset:(offset + BATCH_SIZE), ...]
 			batch_labels = train_labels[offset:(offset + BATCH_SIZE)]
+			batch_legal_moves = train_legal_moves[offset:(offset + BATCH_SIZE), ...]
 			# This dictionary maps the batch data (as a np array) to the
 			# node in the graph it should be fed to.
 			feed_dict = {train_data_node: batch_data,
-					train_labels_node: batch_labels}
+					train_labels_node: batch_labels,
+					legal_moves_node: batch_legal_moves}
 			# Run the graph and fetch some of the nodes.
 			_, l, lr, predictions = sess.run(
 				[optimizer, loss, learning_rate, train_prediction],
@@ -176,10 +185,10 @@ def main():
 				print('Minibatch loss: %.3f, learning rate: %.6f' % (l, lr))
 				print('Minibatch error: %.1f, %.1f, %.1f, %.1f, %.1f, %.1f, %.1f, %.1f, %.1f, %.1f, %%' % error_rate(predictions, batch_labels))
 				print('Validation error: %.1f, %.1f, %.1f, %.1f, %.1f, %.1f, %.1f, %.1f, %.1f, %.1f, %%' % error_rate(
-					eval_in_batches(validation_data, sess), validation_labels))
+					eval_in_batches(validation_data, validation_legal_moves, sess), validation_labels))
 				sys.stdout.flush()
 
-			if step % SAVE_FREQUENCY == 0 and False:
+			if step % SAVE_FREQUENCY == 0:
 				save_path = saver.save(sess, "{}/model_{}.ckpt".format(save_file_dir, step))
 				print("Model saved in file: %s" % save_path)
 
@@ -191,7 +200,7 @@ def main():
 				savemat('{}/data.mat'.format(save_file_dir), key_dict)
 
 		# Finally print the result!
-		test_error = error_rate(eval_in_batches(test_data, sess), test_labels)
+		test_error = error_rate(eval_in_batches(test_data, test_legal_moves, sess), test_labels)
 		print('Test error: %.1f, %.1f, %.1f, %.1f, %.1f, %.1f, %.1f, %.1f, %.1f, %.1f, %%' % test_error)
 
 

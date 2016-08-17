@@ -21,13 +21,13 @@
 #define PLAYER_1 1
 #define PLAYER_2 2
 #define TIE 3
-#define DEPTH 20
+#define DEPTH 25
 #define N_EVAL_WEIGHTS 13
 
 #define MIN_VALUE (-10000000)
 #define MAX_VALUE (10000000)
 
-int TIME_LIMIT = 500;
+int TIME_LIMIT = 1000*.5;
 
 using namespace std;
 using namespace std::chrono;
@@ -200,10 +200,10 @@ void PrintBoard(State &s) {
 }
 
 // for finding horizontal, vertical, diagonal lines
-static int lines_y[8][3] = {{0, 0, 0}, {1, 1, 1}, {2, 2, 2},
+static const int lines_y[8][3] = {{0, 0, 0}, {1, 1, 1}, {2, 2, 2},
                     {0, 1, 2}, {0, 1, 2}, {0, 1, 2},
                     {0, 1, 2}, {2, 1, 0}};
-static int lines_x[8][3] = {{0, 1, 2}, {0, 1, 2}, {0, 1, 2},
+static const int lines_x[8][3] = {{0, 1, 2}, {0, 1, 2}, {0, 1, 2},
                     {0, 0, 0}, {1, 1, 1}, {2, 2, 2},
                     {0, 1, 2}, {0, 1, 2}}; 
 
@@ -223,6 +223,9 @@ void GetOpenBoards(State &s, bool* open_boards){
             }
             if(num_spaces == 9){
                 open_boards[board_y * 3 + board_x] = false;
+                continue;
+            } else if(num_spaces <= 2){
+                // heuristic, if 2 or less spaces taken know there can't be three in a row
                 continue;
             }
             // check if someone won the board
@@ -329,14 +332,16 @@ void AssignFeatureVector(bool* feature_vector, bool* feature, int offset){
 }
 
 // Updates the linear ml model for the state.
-// TODO: only process changes, don't recalculate the whole thing
-void UpdateMovePredictor(State &s){
-    // copy bias variable (now s.move_predictor = b)
-    for(int i = 0; i < 81; ++i){
-        s.move_predictor[i] = bias[i];
+void UpdateMovePredictor(State &s, Move* moves, int n_moves){
+    // get the legal move indexes
+    int move_indices[n_moves];
+    for(int i = 0; i < n_moves; ++i){
+        Move cur_move = moves[i];
+        move_indices[i] = cur_move.y * 9 + cur_move.x;
     }
+    sort(move_indices, move_indices + n_moves);
 
-    bool feature_vector[729] = {0};
+    bool feature_vector[8*81] = {0};
 
     // plane 0, all 0s
     int offset = 0;
@@ -362,66 +367,66 @@ void UpdateMovePredictor(State &s){
         }
     }
 
-    // open boards for planes 3-8, length 9
-    bool open_boards[9] = {true};
+    // open boards for planes 3-7, length 9
+    bool open_boards[9];
+    memset(open_boards, true, sizeof(bool) * 9);
     GetOpenBoards(s, open_boards);
 
-    // feature plane 3, legal move plane
-    bool legal_moves[81];
-    GetLegalMoves(s, open_boards, legal_moves);
-    offset = 81 * 3;
-    for(int i = 0; i < 81; ++i){
-        feature_vector[offset + i] = legal_moves[i];
-    }
-
-    // feature planes 4-5, whether or not it is possible to complete row of 3s
+    // feature planes 3-4, whether or not it is possible to complete row of 3s
     bool ones_open[81];
     memset(ones_open, true, sizeof(bool) * 81);
     bool twos_open[81];
     memset(twos_open, true, sizeof(bool) * 81);
     // feature planes 6-7, whether or can complete row of 3s this turn
-    bool ones_almost[81] = {0};
+    bool ones_almost[81];
+    memset(ones_almost, false, sizeof(bool) * 81);
     bool twos_almost[81] = {0};
+    memset(twos_almost, false, sizeof(bool) * 81);
     GetLineStats(s, open_boards, ones_open, twos_open, ones_almost, twos_almost);
 
     if(s.cur_player == 1){
-        offset = 81 * 4;
+        offset = 81 * 3;
     } else{
-        offset = 81 * 5;
+        offset = 81 * 4;
     }
     AssignFeatureVector(feature_vector, ones_open, offset);
 
     if(s.cur_player == 1){
-        offset = 81 * 5;
-    } else{
         offset = 81 * 4;
+    } else{
+        offset = 81 * 3;
     }
     AssignFeatureVector(feature_vector, twos_open, offset);
 
     if(s.cur_player == 1){
-        offset = 81 * 6;
+        offset = 81 * 5;
     } else{
-        offset = 81 * 7;
+        offset = 81 * 6;
     }
     AssignFeatureVector(feature_vector, ones_almost, offset);
 
     if(s.cur_player == 1){
-        offset = 81 * 7;
-    } else{
         offset = 81 * 6;
+    } else{
+        offset = 81 * 5;
     }
     AssignFeatureVector(feature_vector, twos_almost, offset);
 
-    // feature plane 8, whether this move will send opponent to open board or not
+    // feature plane 7, whether this move will send opponent to open board or not
     bool send_to_board[81];
     GetSendBoard(s, open_boards, send_to_board);
-    AssignFeatureVector(feature_vector, send_to_board, 81*8);
+    AssignFeatureVector(feature_vector, send_to_board, 81*7);
+
+    // copy bias variable (now s.move_predictor = b)
+    for(int i = 0; i < n_moves; ++i){
+        s.move_predictor[move_indices[i]] = bias[move_indices[i]];
+    }
 
     // do multiplication (now s.move_predictor = Ax+b)
-    for(int i = 0; i < 729; ++i){
+    for(int i = 0; i < 8*81; ++i){
         if(feature_vector[i]){
-            for(int j = 0; j < 81; ++j){
-                s.move_predictor[j] += weights[i][j];
+            for(int j = 0; j < n_moves; ++j){
+                s.move_predictor[move_indices[j]] += weights[i][move_indices[j]];
             }
         }
     }
@@ -684,7 +689,7 @@ MoveSort(const State &state) : s(state) {}
 
 void OrderMoves(State &s, Move *moves, int n_moves) {
     // for ml model
-    UpdateMovePredictor(s);
+    UpdateMovePredictor(s, moves, n_moves);
     sort(moves, moves+n_moves, MoveSort(s));
 }
 

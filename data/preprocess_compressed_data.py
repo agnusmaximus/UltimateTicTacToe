@@ -200,20 +200,23 @@ def extract_data(data, num_moves):
 					legal_moves_layer = legal_moves_layer.T
 					legal_moves[move_index] = legal_moves_layer
 					move_index += 1
+					#assert legal_moves_layer[cur_move]
 
 					# reverse rows
 					features_data = features_data[:, :, ::-1]
 					features[move_index] = features_data
 					cur_move = reverse_rows_move(cur_move)
 					labels[move_index] = cur_move
-					legal_moves_layer = legal_moves_layer[::-1]
+					legal_moves_layer = legal_moves_layer[:, ::-1]
 					legal_moves[move_index] = legal_moves_layer
 					move_index += 1
+					#assert legal_moves_layer[cur_move]
 			else:
 				features[move_index] = features_data
 				labels[move_index] = cur_move
 				legal_moves[move_index] = legal_moves_layer
 				move_index += 1
+				#assert legal_moves_layer[cur_move]
 			if move_index % 10000 == 0:
 				print move_index
 	return features, labels, legal_moves

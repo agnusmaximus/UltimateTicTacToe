@@ -12,7 +12,7 @@
 using namespace std;
 
 // for alphabeta search, pick top TOP_K_MOVES most likely moves
-static const int TOP_K_MOVES = 81;
+static const int TOP_K_MOVES = 3;
 static int nodes_searched = 0;
 static int n_leaf_nodes = 0;
 
@@ -55,12 +55,13 @@ int alphabeta(State &s, int depth, int a, int b, Move &choose, int top_level, in
     Move moves[81];
     Move bestmove = {EMPTY,EMPTY,EMPTY};
     int n_moves_generated = GenerateValidMoves(s, moves);
+
+    OrderMoves(s, moves, n_moves_generated);
+
     // do top k moves instead
     if(n_moves_generated > TOP_K_MOVES){
         n_moves_generated = TOP_K_MOVES;
     }
-
-    OrderMoves(s, moves, n_moves_generated);
 
     for (int i = 0; i < n_moves_generated; i++) {
         Move &move = moves[i];
